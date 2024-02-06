@@ -1,7 +1,8 @@
 package io.renku.avro4s
 
 import cats.syntax.all.*
-import scodec.bits.{BitVector, ByteVector}
+import scodec.bits.ByteOrdering.LittleEndian
+import scodec.bits.{BitVector, ByteOrdering, ByteVector}
 import scodec.codecs.*
 
 import scala.annotation.tailrec
@@ -45,4 +46,16 @@ trait PrimitiveValueEncoders:
         val withMbs = addMBS(chunks)
         withMbs.reduce(_ ++ _).toByteVector
       }
+  }
+
+  given ValueEncoder[Float] = ValueEncoder.instance { v =>
+    ByteVector
+      .fromInt(java.lang.Float.floatToIntBits(v), ordering = LittleEndian)
+      .asRight[AvroEncodingException]
+  }
+
+  given ValueEncoder[Double] = ValueEncoder.instance { v =>
+    ByteVector
+      .fromLong(java.lang.Double.doubleToLongBits(v), ordering = LittleEndian)
+      .asRight[AvroEncodingException]
   }

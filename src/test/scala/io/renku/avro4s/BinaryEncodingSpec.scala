@@ -63,18 +63,30 @@ class BinaryEncodingSpec
       }
 
   it should "serialize/deserialize a Float number value" in:
-    val schema: Schema[Int] = Schema.Type.Int(name = "field")
+    val schema: Schema[Float] = Schema.Type.Float(name = "field")
 
-    List(0, 1, Byte.MaxValue / 2 + 1, Short.MaxValue / 2 + 1, Int.MaxValue / 2 + 1)
-      .flatMap(v => List(-v, v))
-      .foreach { v =>
-        val actual = AvroEncoder.encode(v, schema).value
-        val expected =
-          prepareExpected(Seq(v), Integer.valueOf, """{"type": "int"}""").toBin
-        actual.toBin shouldBe expected
+    forAll { (v: Float) =>
 
-        AvroDecoder.decode(actual, schema).value shouldBe v
-      }
+      val actual = AvroEncoder.encode(v, schema).value
+      val expected =
+        prepareExpected(Seq(v), java.lang.Float.valueOf, """{"type": "float"}""").toBin
+      actual.toBin shouldBe expected
+
+      AvroDecoder.decode(actual, schema).value shouldBe v
+    }
+
+  it should "serialize/deserialize a Double number value" in:
+    val schema: Schema[Double] = Schema.Type.Double(name = "field")
+
+    forAll { (v: Double) =>
+
+      val actual = AvroEncoder.encode(v, schema).value
+      val expected =
+        prepareExpected(Seq(v), java.lang.Double.valueOf, """{"type": "double"}""").toBin
+      actual.toBin shouldBe expected
+
+      AvroDecoder.decode(actual, schema).value shouldBe v
+    }
 
   private def prepareExpected[A](values: Seq[A], encoder: A => Any, schema: String) =
     AvroWriter(parse(schema)).write(values, encoder)

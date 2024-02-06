@@ -1,6 +1,7 @@
 package io.renku.avro4s
 
 import cats.syntax.all.*
+import scodec.bits.ByteOrdering.LittleEndian
 import scodec.bits.{BitVector, ByteVector}
 
 import scala.annotation.tailrec
@@ -37,3 +38,23 @@ trait PrimitiveValueDecoders:
       else (zigZag + 1) / 2 * -1
 
     (res -> rest).asRight
+
+  given ValueDecoder[Float] = (bytes: ByteVector) =>
+    bytes.splitAt(4) match
+      case (ByteVector.empty, _) =>
+        AvroDecodingException("Cannot decode double value from empty bytes").asLeft
+      case (l, r) =>
+        val d = java.lang.Float
+          .intBitsToFloat(l.toInt(ordering = LittleEndian))
+          .floatValue
+        (d, r).asRight[AvroDecodingException]
+
+  given ValueDecoder[Double] = (bytes: ByteVector) =>
+    bytes.splitAt(8) match
+      case (ByteVector.empty, _) =>
+        AvroDecodingException("Cannot decode double value from empty bytes").asLeft
+      case (l, r) =>
+        val d = java.lang.Double
+          .longBitsToDouble(l.toLong(ordering = LittleEndian))
+          .doubleValue
+        (d, r).asRight[AvroDecodingException]

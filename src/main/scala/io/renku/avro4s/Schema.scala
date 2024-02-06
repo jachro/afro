@@ -9,4 +9,5 @@ object Schema:
     final case class Boolean(name: String) extends Schema[scala.Boolean]
     final case class Int(name: String) extends Schema[scala.Int]
     final case class Long(name: String) extends Schema[scala.Long]
-    final case class Float(name: String) extends Schema[scala.Int]
+    final case class Float(name: String) extends Schema[scala.Float]
+    final case class Double(name: String) extends Schema[scala.Double]

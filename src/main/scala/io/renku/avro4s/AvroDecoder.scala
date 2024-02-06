@@ -15,3 +15,5 @@ object AvroDecoder:
       case s: Schema.Type.Boolean => ValueDecoder[Boolean].decode(bytes).map(_._1)
       case s: Schema.Type.Int     => ValueDecoder[Int].decode(bytes).map(_._1)
       case s: Schema.Type.Long    => ValueDecoder[Long].decode(bytes).map(_._1)
+      case s: Schema.Type.Float   => ValueDecoder[Float].decode(bytes).map(_._1)
+      case s: Schema.Type.Double  => ValueDecoder[Double].decode(bytes).map(_._1)
