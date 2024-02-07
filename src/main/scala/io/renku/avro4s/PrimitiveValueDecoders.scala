@@ -18,7 +18,7 @@ trait PrimitiveValueDecoders:
       case (l, r) =>
         (if l.head == 1 then true else false, r).asRight[AvroDecodingException]
 
-  given ValueDecoder[Int] = ValueDecoder[Long].emap(_.toInt)
+  given ValueDecoder[Int] = ValueDecoder[Long].map(_.toInt)
 
   given ValueDecoder[Long] = (bytes: ByteVector) =>
 
