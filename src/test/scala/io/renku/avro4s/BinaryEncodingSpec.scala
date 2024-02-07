@@ -8,6 +8,7 @@ import org.scalatest.EitherValues
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import scodec.bits.ByteVector
 
 class BinaryEncodingSpec
     extends AnyFlatSpec
@@ -25,11 +26,9 @@ class BinaryEncodingSpec
       val schema: Schema[Boolean] = Schema.Type.Boolean(name = "field")
 
       val actual = AvroEncoder.encode(v, schema).value
-      actual shouldBe prepareExpected(
-        Seq(v),
-        java.lang.Boolean.valueOf,
-        """{"type": "boolean"}"""
-      )
+      val expected =
+        expectedFrom(v, java.lang.Boolean.valueOf, """{"type": "boolean"}""").toBin
+      actual.toBin shouldBe expected
 
       AvroDecoder.decode(actual, schema).value shouldBe v
     }
@@ -42,7 +41,7 @@ class BinaryEncodingSpec
       .foreach { v =>
         val actual = AvroEncoder.encode(v, schema).value
         val expected =
-          prepareExpected(Seq(v), Integer.valueOf, """{"type": "int"}""").toBin
+          expectedFrom(v, Integer.valueOf, """{"type": "int"}""").toBin
         actual.toBin shouldBe expected
 
         AvroDecoder.decode(actual, schema).value shouldBe v
@@ -56,7 +55,7 @@ class BinaryEncodingSpec
       .foreach { v =>
         val actual = AvroEncoder.encode(v, schema).value
         val expected =
-          prepareExpected(Seq(v), java.lang.Long.valueOf, """{"type": "long"}""").toBin
+          expectedFrom(v, java.lang.Long.valueOf, """{"type": "long"}""").toBin
         actual.toBin shouldBe expected
 
         AvroDecoder.decode(actual, schema).value shouldBe v
@@ -69,7 +68,7 @@ class BinaryEncodingSpec
 
       val actual = AvroEncoder.encode(v, schema).value
       val expected =
-        prepareExpected(Seq(v), java.lang.Float.valueOf, """{"type": "float"}""").toBin
+        expectedFrom(v, java.lang.Float.valueOf, """{"type": "float"}""").toBin
       actual.toBin shouldBe expected
 
       AvroDecoder.decode(actual, schema).value shouldBe v
@@ -82,13 +81,37 @@ class BinaryEncodingSpec
 
       val actual = AvroEncoder.encode(v, schema).value
       val expected =
-        prepareExpected(Seq(v), java.lang.Double.valueOf, """{"type": "double"}""").toBin
+        expectedFrom(v, java.lang.Double.valueOf, """{"type": "double"}""").toBin
       actual.toBin shouldBe expected
 
       AvroDecoder.decode(actual, schema).value shouldBe v
     }
 
-  private def prepareExpected[A](values: Seq[A], encoder: A => Any, schema: String) =
+  it should "serialize/deserialize a sequence of Bytes" in:
+    val schema: Schema[ByteVector] = Schema.Type.Bytes(name = "field")
+
+    forAll { (v: Seq[Byte]) =>
+      val bvv = ByteVector(v)
+
+      val actual = AvroEncoder.encode(bvv, schema).value
+      val expected = expectedFrom(bvv, _.toByteBuffer, """{"type": "bytes"}""").toBin
+      actual.toBin shouldBe expected
+
+      AvroDecoder.decode(actual, schema).value shouldBe bvv
+    }
+
+  private def expectedFrom[A](
+      values: A,
+      encoder: A => Any,
+      schema: String
+  ): ByteVector =
+    expectedFromSeq[A](Seq(values), encoder, schema)
+
+  private def expectedFromSeq[A](
+      values: Seq[A],
+      encoder: A => Any,
+      schema: String
+  ): ByteVector =
     AvroWriter(parse(schema)).write(values, encoder)
 
   private lazy val parse: String => AvroSchema =

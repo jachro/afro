@@ -42,7 +42,7 @@ trait PrimitiveValueDecoders:
   given ValueDecoder[Float] = (bytes: ByteVector) =>
     bytes.splitAt(4) match
       case (ByteVector.empty, _) =>
-        AvroDecodingException("Cannot decode double value from empty bytes").asLeft
+        AvroDecodingException("Cannot decode float value from empty bytes").asLeft
       case (l, r) =>
         val d = java.lang.Float
           .intBitsToFloat(l.toInt(ordering = LittleEndian))
@@ -58,3 +58,17 @@ trait PrimitiveValueDecoders:
           .longBitsToDouble(l.toLong(ordering = LittleEndian))
           .doubleValue
         (d, r).asRight[AvroDecodingException]
+
+  given ValueDecoder[ByteVector] = {
+    case ByteVector.empty =>
+      AvroDecodingException("Cannot decode bytes value from empty bytes").asLeft
+    case bytes =>
+      ValueDecoder[Long].decode(bytes) >>= {
+        case (size, r) if r.size < size =>
+          AvroDecodingException(
+            s"Cannot decode bytes value as there's only ${r.size} while expected $size"
+          ).asLeft
+        case (size, r) =>
+          (r.take(size) -> r.drop(size)).asRight
+      }
+  }

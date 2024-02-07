@@ -1,5 +1,7 @@
 package io.renku.avro4s
 
+import scodec.bits.ByteVector
+
 sealed trait Schema[A]
 
 object Schema:
@@ -11,3 +13,4 @@ object Schema:
     final case class Long(name: String) extends Schema[scala.Long]
     final case class Float(name: String) extends Schema[scala.Float]
     final case class Double(name: String) extends Schema[scala.Double]
+    final case class Bytes(name: String) extends Schema[ByteVector]

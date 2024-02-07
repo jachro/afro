@@ -59,3 +59,7 @@ trait PrimitiveValueEncoders:
       .fromLong(java.lang.Double.doubleToLongBits(v), ordering = LittleEndian)
       .asRight[AvroEncodingException]
   }
+
+  given ValueEncoder[ByteVector] = ValueEncoder.instance { v =>
+    ValueEncoder[Long].encodeValue(v.size).map(_ ++ v)
+  }
