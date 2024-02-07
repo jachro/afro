@@ -17,13 +17,13 @@ class BinaryEncodingSpec
     with EitherValues:
 
   it should "serialize/deserialize Null value" in:
-    val schema: Schema[Null] = Schema.Type.Null(name = "field")
+    val schema: Schema[Null] = Schema.Type.NullType(name = "field")
     val b = AvroEncoder.encode[Null](null, schema).value
     AvroDecoder.decode(b, schema).value shouldBe null
 
   it should "serialize/deserialize Boolean value" in:
     Set(true, false).foreach { v =>
-      val schema: Schema[Boolean] = Schema.Type.Boolean(name = "field")
+      val schema: Schema[Boolean] = Schema.Type.BooleanType(name = "field")
 
       val actual = AvroEncoder.encode(v, schema).value
       val expected =
@@ -33,8 +33,8 @@ class BinaryEncodingSpec
       AvroDecoder.decode(actual, schema).value shouldBe v
     }
 
-  it should "serialize/deserialize an Int number value" in:
-    val schema: Schema[Int] = Schema.Type.Int(name = "field")
+  it should "serialize/deserialize an Int value" in:
+    val schema: Schema[Int] = Schema.Type.IntType(name = "field")
 
     List(0, 1, Byte.MaxValue / 2 + 1, Short.MaxValue / 2 + 1, Int.MaxValue / 2 + 1)
       .flatMap(v => List(-v, v))
@@ -47,8 +47,8 @@ class BinaryEncodingSpec
         AvroDecoder.decode(actual, schema).value shouldBe v
       }
 
-  it should "serialize/deserialize a Long number value" in:
-    val schema: Schema[Long] = Schema.Type.Long(name = "field")
+  it should "serialize/deserialize a Long value" in:
+    val schema: Schema[Long] = Schema.Type.LongType(name = "field")
 
     List(0, 1, Byte.MaxValue / 2 + 1, Short.MaxValue / 2 + 1, Int.MaxValue / 2 + 1)
       .flatMap(v => List(-v.toLong, v.toLong))
@@ -61,8 +61,8 @@ class BinaryEncodingSpec
         AvroDecoder.decode(actual, schema).value shouldBe v
       }
 
-  it should "serialize/deserialize a Float number value" in:
-    val schema: Schema[Float] = Schema.Type.Float(name = "field")
+  it should "serialize/deserialize a Float value" in:
+    val schema: Schema[Float] = Schema.Type.FloatType(name = "field")
 
     forAll { (v: Float) =>
 
@@ -74,8 +74,8 @@ class BinaryEncodingSpec
       AvroDecoder.decode(actual, schema).value shouldBe v
     }
 
-  it should "serialize/deserialize a Double number value" in:
-    val schema: Schema[Double] = Schema.Type.Double(name = "field")
+  it should "serialize/deserialize a Double value" in:
+    val schema: Schema[Double] = Schema.Type.DoubleType(name = "field")
 
     forAll { (v: Double) =>
 
@@ -88,7 +88,7 @@ class BinaryEncodingSpec
     }
 
   it should "serialize/deserialize a sequence of Bytes" in:
-    val schema: Schema[ByteVector] = Schema.Type.Bytes(name = "field")
+    val schema: Schema[ByteVector] = Schema.Type.BytesType(name = "field")
 
     forAll { (v: Seq[Byte]) =>
       val bvv = ByteVector(v)
@@ -99,6 +99,18 @@ class BinaryEncodingSpec
 
       AvroDecoder.decode(actual, schema).value shouldBe bvv
     }
+
+//  it should "serialize/deserialize a String value" in:
+//    val schema: Schema[String] = Schema.Type.String(name = "field")
+//
+//    forAll { (v: String) =>
+//
+//      val actual = AvroEncoder.encode(bvv, schema).value
+//      val expected = expectedFrom(bvv, _.toByteBuffer, """{"type": "bytes"}""").toBin
+//      actual.toBin shouldBe expected
+//
+//      AvroDecoder.decode(actual, schema).value shouldBe bvv
+//    }
 
   private def expectedFrom[A](
       values: A,
