@@ -63,3 +63,10 @@ trait PrimitiveValueEncoders:
   given ValueEncoder[ByteVector] = ValueEncoder.instance { v =>
     ValueEncoder[Long].encodeValue(v.size).map(_ ++ v)
   }
+
+  given ValueEncoder[String] = ValueEncoder.instance { v =>
+    ByteVector
+      .encodeUtf8(v)
+      .leftMap(AvroEncodingException("String value cannot be UTF-8 encoded", _))
+      .flatMap(bv => ValueEncoder[Long].encodeValue(bv.length).map(_ ++ bv))
+  }

@@ -4,6 +4,8 @@ import io.renku.avro4s.Schema.Type
 import io.renku.avro4s.all.given
 import org.apache.avro.Schema as AvroSchema
 import org.apache.avro.Schema.Parser as AvroParser
+import org.apache.avro.util.Utf8
+import org.scalacheck.Arbitrary
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
@@ -100,17 +102,16 @@ class BinaryEncodingSpec
       AvroDecoder.decode(actual, schema).value shouldBe bvv
     }
 
-//  it should "serialize/deserialize a String value" in:
-//    val schema: Schema[String] = Schema.Type.String(name = "field")
-//
-//    forAll { (v: String) =>
-//
-//      val actual = AvroEncoder.encode(bvv, schema).value
-//      val expected = expectedFrom(bvv, _.toByteBuffer, """{"type": "bytes"}""").toBin
-//      actual.toBin shouldBe expected
-//
-//      AvroDecoder.decode(actual, schema).value shouldBe bvv
-//    }
+  it should "serialize/deserialize a String value" in:
+    val schema: Schema[String] = Schema.Type.StringType(name = "field")
+
+    forAll { (v: String) =>
+      val actual = AvroEncoder.encode(v, schema).value
+      val expected = expectedFrom(v, new Utf8(_), """{"type": "string"}""").toBin
+      actual.toBin shouldBe expected
+
+      AvroDecoder.decode(actual, schema).value shouldBe v
+    }
 
   private def expectedFrom[A](
       values: A,

@@ -72,3 +72,22 @@ trait PrimitiveValueDecoders:
           (r.take(size) -> r.drop(size)).asRight
       }
   }
+
+  given ValueDecoder[String] = {
+    case ByteVector.empty =>
+      AvroDecodingException("Cannot decode string value from empty bytes").asLeft
+    case bytes =>
+      ValueDecoder[Long].decode(bytes) >>= {
+        case (size, r) if r.size < size =>
+          AvroDecodingException(
+            s"Cannot decode string value as there's only ${r.size} while expected $size"
+          ).asLeft
+        case (size, r) =>
+          r.take(size)
+            .decodeUtf8
+            .leftMap(
+              AvroDecodingException(s"Cannot decode string value using UTF-8 charset", _)
+            )
+            .tupleRight(r.drop(size))
+      }
+  }

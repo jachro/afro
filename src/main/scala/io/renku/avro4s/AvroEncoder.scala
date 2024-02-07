@@ -17,6 +17,7 @@ object AvroEncoder:
       case (v: Float, s: Schema.Type.FloatType)      => ValueEncoder[A].encodeValue(v)
       case (v: Double, s: Schema.Type.DoubleType)    => ValueEncoder[A].encodeValue(v)
       case (v: ByteVector, s: Schema.Type.BytesType) => ValueEncoder[A].encodeValue(v)
+      case (v: String, s: Schema.Type.StringType)    => ValueEncoder[A].encodeValue(v)
       case (v, s) =>
         AvroEncodingException(s"Value of type ${v.getClass} cannot be encoded with $s")
           .asLeft[ByteVector]
