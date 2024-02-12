@@ -1,6 +1,7 @@
 package io.renku.avro4s
 
 import cats.syntax.all.*
+import io.renku.avro4s.ValueDecoder.ValueDecodingResult
 import scodec.bits.ByteVector
 
 trait ValueDecoder[A]:
@@ -16,4 +17,10 @@ trait ValueDecoder[A]:
       self.decode(bytes).flatMap { case (a, bv) => f(a).tupleRight(bv) }
 
 object ValueDecoder:
+
+  type ValueDecodingResult[A] = Either[AvroDecodingException, (A, ByteVector)]
+
   def apply[A](using enc: ValueDecoder[A]): ValueDecoder[A] = enc
+
+  def instance[A](f: ByteVector => ValueDecodingResult[A]): ValueDecoder[A] =
+    (bytes: ByteVector) => f(bytes)

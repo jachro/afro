@@ -3,41 +3,86 @@ package io.renku.avro4s
 import scodec.bits.ByteVector
 
 sealed trait Schema:
-  val name: String
   type valueType
   val `type`: String
 
 object Schema:
 
   object Type:
-    final case class NullType(name: String) extends Schema:
+    final case class NullType(maybeName: Option[String]) extends Schema:
       override type valueType = scala.Null
       override val `type`: String = "null"
-    final case class BooleanType(name: String) extends Schema:
+    object NullType:
+      val typeOnly: NullType = NullType(None)
+      def apply(): NullType = typeOnly
+      def apply(name: String): NullType = NullType(Some(name))
+
+    final case class BooleanType(maybeName: Option[String]) extends Schema:
       override type valueType = scala.Boolean
       override val `type`: String = "boolean"
-    final case class IntType(name: String) extends Schema:
+    object BooleanType:
+      val typeOnly: BooleanType = BooleanType(None)
+      def apply(): BooleanType = typeOnly
+      def apply(name: String): BooleanType = BooleanType(Some(name))
+
+    final case class IntType(maybeName: Option[String]) extends Schema:
       override type valueType = scala.Int
       override val `type`: String = "int"
-    final case class LongType(name: String) extends Schema:
+    object IntType:
+      val typeOnly: IntType = IntType(None)
+      def apply(): IntType = typeOnly
+      def apply(name: String): IntType = IntType(Some(name))
+
+    final case class LongType(maybeName: Option[String]) extends Schema:
       override type valueType = scala.Long
       override val `type`: String = "long"
-    final case class FloatType(name: String) extends Schema:
+    object LongType:
+      val typeOnly: LongType = LongType(None)
+      def apply(): LongType = typeOnly
+      def apply(name: String): LongType = LongType(Some(name))
+
+    final case class FloatType(maybeName: Option[String]) extends Schema:
       override type valueType = scala.Float
       override val `type`: String = "float"
-    final case class DoubleType(name: String) extends Schema:
+    object FloatType:
+      val typeOnly: StringType = StringType(None)
+      def apply(): FloatType = FloatType(None)
+      def apply(name: String): FloatType = FloatType(Some(name))
+
+    final case class DoubleType(maybeName: Option[String]) extends Schema:
       override type valueType = scala.Double
       override val `type`: String = "double"
-    final case class BytesType(name: String) extends Schema:
+    object DoubleType:
+      def apply(): DoubleType = DoubleType(None)
+      def apply(name: String): DoubleType = DoubleType(Some(name))
+
+    final case class BytesType(maybeName: Option[String]) extends Schema:
       override type valueType = ByteVector
       override val `type`: String = "bytes"
-    final case class StringType(name: String) extends Schema:
+    object BytesType:
+      def apply(): BytesType = BytesType(None)
+      def apply(name: String): BytesType = BytesType(Some(name))
+
+    final case class StringType(maybeName: Option[String]) extends Schema:
       override type valueType = String
       override val `type`: String = "string"
+    object StringType:
+      val typeOnly: StringType = StringType(None)
+      def apply(): StringType = typeOnly
+      def apply(name: String): StringType = StringType(Some(name))
 
-  final case class Record[A](name: String, fields: Seq[Record.Field]) extends Schema:
-    override type valueType = A
-    override val `type`: String = "record"
+    final case class Record[A](name: String, fields: Seq[Record.Field]) extends Schema:
+      override type valueType = A
+      override val `type`: String = "record"
 
-  object Record:
-    final case class Field(name: String, `type`: String) extends Schema
+      def addField(field: Record.Field): Record[A] =
+        copy(fields = (field +: fields).reverse)
+
+      def addField(name: String, schema: Schema): Record[A] =
+        addField(Record.Field(name, schema))
+
+    object Record:
+
+      def apply[A](name: String): Record[A] = Record(name, Seq.empty)
+
+      final case class Field(name: String, schema: Schema)

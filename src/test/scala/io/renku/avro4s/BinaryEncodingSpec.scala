@@ -1,9 +1,11 @@
 package io.renku.avro4s
 
+import cats.syntax.all.*
 import io.renku.avro4s.Schema.Type
 import io.renku.avro4s.all.given
 import org.apache.avro.Schema as AvroSchema
 import org.apache.avro.Schema.Parser as AvroParser
+import org.apache.avro.generic.GenericRecord
 import org.apache.avro.util.Utf8
 import org.scalacheck.Arbitrary
 import org.scalatest.EitherValues
@@ -114,6 +116,47 @@ class BinaryEncodingSpec
       AvroDecoder(schema).decode(actual).value shouldBe v
     }
 
+  it should "serialize/deserialize a Record value" in:
+    case class TestType(stringValue: String, intValue: Int)
+    val schema = Schema.Type
+      .Record[TestType](name = "TestType")
+      .addField("stringValue", Schema.Type.StringType.typeOnly)
+      .addField("intValue", Schema.Type.IntType.typeOnly)
+    val v = TestType("sv", 1)
+    given ValueEncoder[TestType] = ValueEncoder.instance[TestType] { v =>
+      List(
+        ValueEncoder[String].encodeValue(v.stringValue),
+        ValueEncoder[Int].encodeValue(v.intValue)
+      ).sequence.map(_.reduce(_ ++ _))
+    }
+    given ValueDecoder[TestType] = { bv =>
+      ValueDecoder[String]
+        .decode(bv)
+        .flatMap { case (sv, bv) =>
+          ValueDecoder[Int].decode(bv).map { case (iv, bv) => (sv, iv) -> bv }
+        }
+        .map { case (v, bv) => TestType.apply.tupled(v) -> bv }
+    }
+
+    val actual = AvroEncoder(schema).encode(v).value
+    val avroSchema = """|{
+                        |  "type": "record",
+                        |  "name": "TestType",
+                        |  "fields": [
+                        |    {"name": "stringValue", "type": "string"},
+                        |    {"name": "intValue", "type": "int"}
+                        |  ]
+                        |}""".stripMargin
+    def record(tt: TestType) =
+      AvroRecord(
+        avroSchema,
+        Seq(new Utf8(tt.stringValue), Integer.valueOf(tt.intValue))
+      )
+    val expected = expectedFrom(v, record, avroSchema).toBin
+    actual.toBin shouldBe expected
+
+    AvroDecoder(schema).decode(actual).value shouldBe v
+
   private def expectedFrom[A](
       values: A,
       encoder: A => Any,
@@ -130,3 +173,20 @@ class BinaryEncodingSpec
 
   private lazy val parse: String => AvroSchema =
     new AvroParser().parse
+
+  final case class AvroRecord(schema: String, values: Seq[Any]) extends GenericRecord:
+
+    override def put(key: String, v: Any) = sys.error("immutable record")
+
+    override def put(i: Int, v: Any) = sys.error("Immutable record")
+
+    override def get(key: String): Any = {
+      val field = getSchema.getField(key)
+      if (field == null)
+        sys.error(s"Field $key does not exist in record schema=$schema, values=$values")
+      else values(field.pos())
+    }
+
+    override def get(i: Int) = values(i)
+
+    override lazy val getSchema = parse(schema)
