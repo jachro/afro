@@ -6,21 +6,21 @@ import scodec.bits.{BitVector, ByteVector}
 
 import scala.annotation.tailrec
 
-trait PrimitiveValueDecoders:
+trait PrimitiveTypeDecoders:
 
-  given ValueDecoder[Null] = (bytes: ByteVector) =>
+  given TypeDecoder[Null] = (bytes: ByteVector) =>
     (null, bytes).asRight[AvroDecodingException]
 
-  given ValueDecoder[Boolean] = (bytes: ByteVector) =>
+  given TypeDecoder[Boolean] = (bytes: ByteVector) =>
     bytes.splitAt(1) match
       case (ByteVector.empty, _) =>
         AvroDecodingException("Cannot decode boolean value from empty bytes").asLeft
       case (l, r) =>
         (if l.head == 1 then true else false, r).asRight[AvroDecodingException]
 
-  given ValueDecoder[Int] = ValueDecoder[Long].map(_.toInt)
+  given TypeDecoder[Int] = TypeDecoder[Long].map(_.toInt)
 
-  given ValueDecoder[Long] = (bytes: ByteVector) =>
+  given TypeDecoder[Long] = (bytes: ByteVector) =>
 
     @tailrec
     def takeNumberBits(bytes: ByteVector, acc: BitVector): (BitVector, ByteVector) =
@@ -39,7 +39,7 @@ trait PrimitiveValueDecoders:
 
     (res -> rest).asRight
 
-  given ValueDecoder[Float] = (bytes: ByteVector) =>
+  given TypeDecoder[Float] = (bytes: ByteVector) =>
     bytes.splitAt(4) match
       case (ByteVector.empty, _) =>
         AvroDecodingException("Cannot decode float value from empty bytes").asLeft
@@ -49,7 +49,7 @@ trait PrimitiveValueDecoders:
           .floatValue
         (d, r).asRight[AvroDecodingException]
 
-  given ValueDecoder[Double] = (bytes: ByteVector) =>
+  given TypeDecoder[Double] = (bytes: ByteVector) =>
     bytes.splitAt(8) match
       case (ByteVector.empty, _) =>
         AvroDecodingException("Cannot decode double value from empty bytes").asLeft
@@ -59,11 +59,11 @@ trait PrimitiveValueDecoders:
           .doubleValue
         (d, r).asRight[AvroDecodingException]
 
-  given ValueDecoder[ByteVector] = {
+  given TypeDecoder[ByteVector] = {
     case ByteVector.empty =>
       AvroDecodingException("Cannot decode bytes value from empty bytes").asLeft
     case bytes =>
-      ValueDecoder[Long].decode(bytes) >>= {
+      TypeDecoder[Long].decode(bytes) >>= {
         case (size, r) if r.size < size =>
           AvroDecodingException(
             s"Cannot decode bytes value as there's only ${r.size} while expected $size"
@@ -73,11 +73,11 @@ trait PrimitiveValueDecoders:
       }
   }
 
-  given ValueDecoder[String] = {
+  given TypeDecoder[String] = {
     case ByteVector.empty =>
       AvroDecodingException("Cannot decode string value from empty bytes").asLeft
     case bytes =>
-      ValueDecoder[Long].decode(bytes) >>= {
+      TypeDecoder[Long].decode(bytes) >>= {
         case (size, r) if r.size < size =>
           AvroDecodingException(
             s"Cannot decode string value as there's only ${r.size} while expected $size"

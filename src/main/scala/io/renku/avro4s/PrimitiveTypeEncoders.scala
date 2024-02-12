@@ -7,18 +7,18 @@ import scodec.codecs.*
 
 import scala.annotation.tailrec
 
-trait PrimitiveValueEncoders:
+trait PrimitiveTypeEncoders:
 
-  given ValueEncoder[Null] =
-    ValueEncoder.instance(_ => ByteVector.empty.asRight[AvroEncodingException])
+  given TypeEncoder[Null] =
+    TypeEncoder.instance(_ => ByteVector.empty.asRight[AvroEncodingException])
 
-  given ValueEncoder[Boolean] = ValueEncoder.instance { v =>
+  given TypeEncoder[Boolean] = TypeEncoder.instance { v =>
     ByteVector.fromByte((if v then 1 else 0).toByte).asRight[AvroEncodingException]
   }
 
-  given ValueEncoder[Int] = ValueEncoder[Long].contramap(_.toLong)
+  given TypeEncoder[Int] = TypeEncoder[Long].contramap(_.toLong)
 
-  given ValueEncoder[Long] = ValueEncoder.instance[Long] { v =>
+  given TypeEncoder[Long] = TypeEncoder.instance[Long] { v =>
 
     @tailrec
     def to7BitsChunks(in: BitVector, res: List[BitVector] = Nil): List[BitVector] =
@@ -48,25 +48,25 @@ trait PrimitiveValueEncoders:
       }
   }
 
-  given ValueEncoder[Float] = ValueEncoder.instance { v =>
+  given TypeEncoder[Float] = TypeEncoder.instance { v =>
     ByteVector
       .fromInt(java.lang.Float.floatToIntBits(v), ordering = LittleEndian)
       .asRight[AvroEncodingException]
   }
 
-  given ValueEncoder[Double] = ValueEncoder.instance { v =>
+  given TypeEncoder[Double] = TypeEncoder.instance { v =>
     ByteVector
       .fromLong(java.lang.Double.doubleToLongBits(v), ordering = LittleEndian)
       .asRight[AvroEncodingException]
   }
 
-  given ValueEncoder[ByteVector] = ValueEncoder.instance { v =>
-    ValueEncoder[Long].encodeValue(v.size).map(_ ++ v)
+  given TypeEncoder[ByteVector] = TypeEncoder.instance { v =>
+    TypeEncoder[Long].encodeValue(v.size).map(_ ++ v)
   }
 
-  given ValueEncoder[String] = ValueEncoder.instance { v =>
+  given TypeEncoder[String] = TypeEncoder.instance { v =>
     ByteVector
       .encodeUtf8(v)
       .leftMap(AvroEncodingException("String value cannot be UTF-8 encoded", _))
-      .flatMap(bv => ValueEncoder[Long].encodeValue(bv.length).map(_ ++ bv))
+      .flatMap(bv => TypeEncoder[Long].encodeValue(bv.length).map(_ ++ bv))
   }

@@ -123,17 +123,17 @@ class BinaryEncodingSpec
       .addField("stringValue", Schema.Type.StringType.typeOnly)
       .addField("intValue", Schema.Type.IntType.typeOnly)
     val v = TestType("sv", 1)
-    given ValueEncoder[TestType] = ValueEncoder.instance[TestType] { v =>
+    given TypeEncoder[TestType] = TypeEncoder.instance[TestType] { v =>
       List(
-        ValueEncoder[String].encodeValue(v.stringValue),
-        ValueEncoder[Int].encodeValue(v.intValue)
+        TypeEncoder[String].encodeValue(v.stringValue),
+        TypeEncoder[Int].encodeValue(v.intValue)
       ).sequence.map(_.reduce(_ ++ _))
     }
-    given ValueDecoder[TestType] = { bv =>
-      ValueDecoder[String]
+    given TypeDecoder[TestType] = { bv =>
+      TypeDecoder[String]
         .decode(bv)
         .flatMap { case (sv, bv) =>
-          ValueDecoder[Int].decode(bv).map { case (iv, bv) => (sv, iv) -> bv }
+          TypeDecoder[Int].decode(bv).map { case (iv, bv) => (sv, iv) -> bv }
         }
         .map { case (v, bv) => TestType.apply.tupled(v) -> bv }
     }
