@@ -117,45 +117,48 @@ class BinaryEncodingSpec
     }
 
   it should "serialize/deserialize a Record value" in:
-    case class TestType(stringValue: String, intValue: Int)
-    val schema = Schema.Type
-      .Record[TestType](name = "TestType")
-      .addField("stringValue", Schema.Type.StringType.typeOnly)
-      .addField("intValue", Schema.Type.IntType.typeOnly)
-    val v = TestType("sv", 1)
-    given TypeEncoder[TestType] = TypeEncoder.instance[TestType] { v =>
-      List(
-        TypeEncoder[String].encodeValue(v.stringValue),
-        TypeEncoder[Int].encodeValue(v.intValue)
-      ).sequence.map(_.reduce(_ ++ _))
-    }
-    given TypeDecoder[TestType] = { bv =>
-      TypeDecoder[String]
-        .decode(bv)
-        .flatMap { case (sv, bv) =>
-          TypeDecoder[Int].decode(bv).map { case (iv, bv) => (sv, iv) -> bv }
-        }
-        .map { case (v, bv) => TestType.apply.tupled(v) -> bv }
-    }
 
-    val actual = AvroEncoder(schema).encode(v).value
-    val avroSchema = """|{
-                        |  "type": "record",
-                        |  "name": "TestType",
-                        |  "fields": [
-                        |    {"name": "stringValue", "type": "string"},
-                        |    {"name": "intValue", "type": "int"}
-                        |  ]
-                        |}""".stripMargin
+    val v = TestType("sv", 1)
+
+    val actual = AvroEncoder(TestType.schema).encode(v).value
     def record(tt: TestType) =
       AvroRecord(
-        avroSchema,
+        TestType.avroSchema,
         Seq(new Utf8(tt.stringValue), Integer.valueOf(tt.intValue))
+      )
+    val expected = expectedFrom(v, record, TestType.avroSchema).toBin
+    actual.toBin shouldBe expected
+
+    AvroDecoder(TestType.schema).decode(actual).value shouldBe v
+
+  it should "serialize/deserialize a nested Record value" in:
+
+    val v = NestedTestType("name", TestType("sv", 1))
+
+    val actual = AvroEncoder(NestedTestType.schema).encode(v).value
+    val avroSchema = s"""|{
+                         |  "type": "record",
+                         |  "name": "NestedTestType",
+                         |  "fields": [
+                         |    {"name": "name", "type": "string"},
+                         |    {"name": "nested", "type": ${TestType.avroSchema}}
+                         |  ]
+                         |}""".stripMargin
+    def record(tt: NestedTestType) =
+      AvroRecord(
+        avroSchema,
+        Seq(
+          new Utf8(tt.name),
+          AvroRecord(
+            TestType.avroSchema,
+            Seq(new Utf8(tt.nested.stringValue), Integer.valueOf(tt.nested.intValue))
+          )
+        )
       )
     val expected = expectedFrom(v, record, avroSchema).toBin
     actual.toBin shouldBe expected
 
-    AvroDecoder(schema).decode(actual).value shouldBe v
+    AvroDecoder(NestedTestType.schema).decode(actual).value shouldBe v
 
   private def expectedFrom[A](
       values: A,
@@ -171,14 +174,14 @@ class BinaryEncodingSpec
   ): ByteVector =
     AvroWriter(parse(schema)).write(values, encoder)
 
-  private lazy val parse: String => AvroSchema =
+  private def parse: String => AvroSchema =
     new AvroParser().parse
 
   final case class AvroRecord(schema: String, values: Seq[Any]) extends GenericRecord:
 
-    override def put(key: String, v: Any) = sys.error("immutable record")
+    override def put(key: String, v: Any): Unit = sys.error("immutable record")
 
-    override def put(i: Int, v: Any) = sys.error("Immutable record")
+    override def put(i: Int, v: Any): Unit = sys.error("Immutable record")
 
     override def get(key: String): Any = {
       val field = getSchema.getField(key)
@@ -187,6 +190,6 @@ class BinaryEncodingSpec
       else values(field.pos())
     }
 
-    override def get(i: Int) = values(i)
+    override def get(i: Int): Any = values(i)
 
-    override lazy val getSchema = parse(schema)
+    override lazy val getSchema: AvroSchema = parse(schema)
