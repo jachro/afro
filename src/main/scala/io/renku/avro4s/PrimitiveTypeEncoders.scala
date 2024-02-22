@@ -9,7 +9,7 @@ import scala.annotation.tailrec
 
 trait PrimitiveTypeEncoders:
 
-  given TypeEncoder[Null] =
+  val nullTypeEncoder: TypeEncoder[Null] =
     TypeEncoder.instance(_ => ByteVector.empty.asRight[AvroEncodingException])
 
   given TypeEncoder[Boolean] = TypeEncoder.instance { v =>

@@ -1,13 +1,12 @@
 package io.renku.avro4s
 
-import cats.syntax.all.*
 import io.renku.avro4s.Schema.Type
-import io.renku.avro4s.all.given
+import io.renku.avro4s.all.{*, given}
 import org.apache.avro.Schema as AvroSchema
 import org.apache.avro.Schema.Parser as AvroParser
-import org.apache.avro.generic.GenericRecord
+import org.apache.avro.generic.{GenericData, GenericRecord}
 import org.apache.avro.util.Utf8
-import org.scalacheck.Arbitrary
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
@@ -22,6 +21,8 @@ class BinaryEncodingSpec
 
   it should "serialize/deserialize Null value" in:
     val schema = Schema.Type.NullType(name = "field")
+    given TypeEncoder[Null] = nullTypeEncoder
+    given TypeDecoder[Null] = nullTypeDecoder
 
     val b = AvroEncoder(schema).encode(null).value
     AvroDecoder(schema).decode(b).value shouldBe null
@@ -159,6 +160,26 @@ class BinaryEncodingSpec
     actual.toBin shouldBe expected
 
     AvroDecoder(NestedTestType.schema).decode(actual).value shouldBe v
+
+  it should "serialize/deserialize an Enum value" in:
+    enum TestEnum:
+      case A, B
+
+    val schema = Schema.Type.EnumType(name = "field", TestEnum.values)
+    given TypeDecoder[TestEnum] = enumTypeDecoder(using TestEnum)
+    val avroSchema = s"""{"type": "enum", "name": "TestEnum", "symbols": ["A", "B"]}"""
+
+    forAll(Gen.oneOf(TestEnum.values.toList)) { (v: TestEnum) =>
+      val actual = AvroEncoder(schema).encode(v).value
+      val expected = expectedFrom[TestEnum](
+        v,
+        v => GenericData.get().createEnum(v.productPrefix, parse(avroSchema)),
+        avroSchema
+      ).toBin
+      actual.toBin shouldBe expected
+
+      AvroDecoder(schema).decode(actual).value shouldBe v
+    }
 
   private def expectedFrom[A](
       values: A,

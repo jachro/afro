@@ -8,7 +8,7 @@ import scala.annotation.tailrec
 
 trait PrimitiveTypeDecoders:
 
-  given TypeDecoder[Null] = (bytes: ByteVector) =>
+  val nullTypeDecoder: TypeDecoder[Null] = (bytes: ByteVector) =>
     (null, bytes).asRight[AvroDecodingException]
 
   given TypeDecoder[Boolean] = (bytes: ByteVector) =>

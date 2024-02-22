@@ -86,3 +86,13 @@ object Schema:
       def apply[A](name: String): Record[A] = Record(name, Seq.empty)
 
       final case class Field(name: String, schema: Schema)
+
+    final case class EnumType[A <: scala.reflect.Enum](
+        maybeName: Option[String],
+        symbols: Array[A]
+    ) extends Schema:
+      override type objectType = A
+      override val `type`: String = "enum"
+    object EnumType:
+      def apply[A <: scala.reflect.Enum](name: String, symbols: Array[A]): EnumType[A] =
+        EnumType[A](Some(name), symbols)
