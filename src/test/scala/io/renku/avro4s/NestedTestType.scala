@@ -7,6 +7,7 @@ import io.renku.avro4s.all.given
 final private case class NestedTestType(name: String, nested: TestType)
 
 private object NestedTestType:
+  
   val schema: Type.Record[NestedTestType] = Schema.Type
     .Record[NestedTestType](name = "NestedTestType")
     .addField("name", Schema.Type.StringType.typeOnly)

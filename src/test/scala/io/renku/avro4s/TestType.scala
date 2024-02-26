@@ -3,6 +3,7 @@ package io.renku.avro4s
 import cats.syntax.all.*
 import io.renku.avro4s.Schema.Type
 import io.renku.avro4s.all.given
+import org.apache.avro.util.Utf8
 
 final private case class TestType(stringValue: String, intValue: Int)
 
@@ -22,6 +23,12 @@ private object TestType:
        |    {"name": "intValue", "type": "int"}
        |  ]
        |}""".stripMargin
+
+  def avroLibEncoder(tt: TestType): OfficialAvroLibRecord =
+    OfficialAvroLibRecord(
+      TestType.avroSchema,
+      Seq(new Utf8(tt.stringValue), Integer.valueOf(tt.intValue))
+    )
 
   given TypeEncoder[TestType] = TypeEncoder.instance[TestType] { v =>
     List(
