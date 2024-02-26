@@ -103,16 +103,26 @@ object Schema:
 
     object Array:
 
-      def apply[I](name: String, itemsSchema: Schema { type objectType = I }): Array[I] =
-        Array[I](name, itemsSchema)
+      def apply[I](
+          name: String,
+          itemsSchema: Schema { type objectType = I }
+      ): Iterable[I, scala.Array] =
+        Iterable[I, scala.Array](name, itemsSchema)
 
-      def forList[I](name: String, itemsSchema: Schema { type objectType = I }): List[I] =
-        List[I](name, itemsSchema)
+      def forList[I](
+          name: String,
+          itemsSchema: Schema { type objectType = I }
+      ): Iterable[I, List] =
+        backedBy[List, I](name, itemsSchema)
 
-      final case class Array[I](name: String, itemsSchema: Schema { type objectType = I })
-          extends GenericArray[I](name, itemsSchema):
-        override type objectType = scala.Array[I]
+      def backedBy[C[X] <: scala.Iterable[X], I](
+          name: String,
+          itemsSchema: Schema { type objectType = I }
+      ): Iterable[I, C] =
+        Iterable[I, C](name, itemsSchema)
 
-      final case class List[I](name: String, itemsSchema: Schema { type objectType = I })
-          extends GenericArray[I](name, itemsSchema):
-        override type objectType = scala.List[I]
+      final case class Iterable[I, C[X]](
+          name: String,
+          itemsSchema: Schema { type objectType = I }
+      ) extends GenericArray[I](name, itemsSchema):
+        override type objectType = C[I]

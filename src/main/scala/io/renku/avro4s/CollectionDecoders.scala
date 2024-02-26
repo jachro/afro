@@ -7,7 +7,27 @@ import scala.reflect.ClassTag
 
 trait CollectionDecoders extends PrimitiveTypeDecoders:
 
-  given [I](using ie: TypeDecoder[I], ct: ClassTag[I]): TypeDecoder[Array[I]] =
+  given [C[X], I](using
+      ie: TypeDecoder[I],
+      converter: Array[I] => C[I],
+      ict: ClassTag[I]
+  ): TypeDecoder[C[I]] =
+    decodeArray[I].map[C[I]](converter)
+
+  given fromArray[I](using
+      ct: ClassTag[Array[I]],
+      ict: ClassTag[I]
+  ): Function1[Array[I], Array[I]] =
+    identity
+  given [I](using ct: ClassTag[Set[I]], ict: ClassTag[I]): Function1[Array[I], Set[I]] =
+    _.toSet
+  given [I](using ct: ClassTag[List[I]], ict: ClassTag[I]): Function1[Array[I], List[I]] =
+    _.toList
+
+  private def decodeArray[I](using
+      ie: TypeDecoder[I],
+      ct: ClassTag[I]
+  ): TypeDecoder[Array[I]] =
     TypeDecoder.instance[Array[I]] { bv =>
       TypeDecoder[Long].decode(bv) >>= {
         case (0L, bv) => (Array.empty[I] -> bv).asRight[AvroDecodingException]
@@ -17,13 +37,6 @@ trait CollectionDecoders extends PrimitiveTypeDecoders:
             .map { case (l, bv) => l -> bv.drop(1) }
       }
     }
-
-  given [I](using
-      ie: TypeDecoder[I],
-      ct: ClassTag[List[I]],
-      ict: ClassTag[I]
-  ): TypeDecoder[List[I]] =
-    TypeDecoder[Array[I]].map[List[I]](_.toList)
 
   @tailrec
   private def decodeItems[I](

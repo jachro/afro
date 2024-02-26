@@ -13,7 +13,8 @@ class CollectionsBinaryEncodingSpec extends BinaryEncodingSpec:
 
     val schema = Schema.Type.Array(name = "field", Schema.Type.IntType.typeOnly)
 
-    forAll { (v: Array[Int]) =>
+    forAll { (l: List[Int]) =>
+      val v = l.toArray
       val actual = AvroEncoder(schema).encode(v).value
       val expected = expectedFrom(
         v,
@@ -29,7 +30,7 @@ class CollectionsBinaryEncodingSpec extends BinaryEncodingSpec:
 
     val schema = Schema.Type.Array(name = "field", TestType.schema)
 
-    val v = Array(TestType("tt1", 1), TestType("tt2", 2))
+    val v = scala.Array(TestType("tt1", 1), TestType("tt2", 2))
     val actual = AvroEncoder(schema).encode(v).value
     val expected = expectedFrom(
       v,
@@ -45,6 +46,23 @@ class CollectionsBinaryEncodingSpec extends BinaryEncodingSpec:
     val schema = Schema.Type.Array.forList(name = "field", Schema.Type.IntType.typeOnly)
 
     forAll { (v: List[Int]) =>
+      val actual = AvroEncoder(schema).encode(v).value
+      val expected = expectedFrom(
+        v,
+        _.map(java.lang.Integer.valueOf).toList.asJava,
+        """{"type": "array", "items": "int"}"""
+      ).toBin
+      actual.toBin shouldBe expected
+
+      AvroDecoder(schema).decode(actual).value shouldBe v
+    }
+
+  it should "serialize/deserialize an Iterable" in:
+
+    val schema: Schema.Type.Array.Iterable[Int, Set] =
+      Schema.Type.Array.backedBy[Set, Int](name = "field", Schema.Type.IntType.typeOnly)
+
+    forAll { (v: Set[Int]) =>
       val actual = AvroEncoder(schema).encode(v).value
       val expected = expectedFrom(
         v,
