@@ -74,25 +74,28 @@ object Schema:
     final case class Record[A](name: String, fields: Seq[Record.Field]) extends Schema:
       override type objectType = A
       override val `type`: String = "record"
-
       def addField(field: Record.Field): Record[A] =
         copy(fields = (field +: fields).reverse)
-
       def addField(name: String, schema: Schema): Record[A] =
         addField(Record.Field(name, schema))
-
     object Record:
-
       def apply[A](name: String): Record[A] = Record(name, Seq.empty)
-
       final case class Field(name: String, schema: Schema)
 
     final case class EnumType[A <: scala.reflect.Enum](
         maybeName: Option[String],
-        symbols: Array[A]
+        symbols: scala.Array[A]
     ) extends Schema:
       override type objectType = A
       override val `type`: String = "enum"
     object EnumType:
-      def apply[A <: scala.reflect.Enum](name: String, symbols: Array[A]): EnumType[A] =
+      def apply[A <: scala.reflect.Enum](
+          name: String,
+          symbols: scala.Array[A]
+      ): EnumType[A] =
         EnumType[A](Some(name), symbols)
+
+    final case class Array[I](name: String, itemsSchema: Schema { type objectType = I })
+        extends Schema:
+      override type objectType = scala.Array[I]
+      override val `type`: String = "array"

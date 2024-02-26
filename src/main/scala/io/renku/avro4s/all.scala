@@ -5,3 +5,5 @@ object all
     with PrimitiveTypeDecoders
     with EnumTypeEncoder
     with EnumTypeDecoder
+    with CollectionEncoders
+    with CollectionDecoders

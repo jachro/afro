@@ -12,6 +12,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import scodec.bits.ByteVector
+import scala.jdk.CollectionConverters.*
 
 class BinaryEncodingSpec
     extends AnyFlatSpec
@@ -175,6 +176,22 @@ class BinaryEncodingSpec
         v,
         v => GenericData.get().createEnum(v.productPrefix, parse(avroSchema)),
         avroSchema
+      ).toBin
+      actual.toBin shouldBe expected
+
+      AvroDecoder(schema).decode(actual).value shouldBe v
+    }
+
+  it should "serialize/deserialize an Array - case with a positive count" in:
+
+    val schema = Schema.Type.Array(name = "field", Schema.Type.IntType.typeOnly)
+
+    forAll { (v: Array[Int]) =>
+      val actual = AvroEncoder(schema).encode(v).value
+      val expected = expectedFrom(
+        v,
+        _.map(i => java.lang.Integer.valueOf(i)).toList.asJava,
+        """{"type": "array", "items": "int"}"""
       ).toBin
       actual.toBin shouldBe expected
 
