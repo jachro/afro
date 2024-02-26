@@ -95,7 +95,24 @@ object Schema:
       ): EnumType[A] =
         EnumType[A](Some(name), symbols)
 
-    final case class Array[I](name: String, itemsSchema: Schema { type objectType = I })
-        extends Schema:
-      override type objectType = scala.Array[I]
+    sealed abstract class GenericArray[I](
+        name: String,
+        itemsSchema: Schema { type objectType = I }
+    ) extends Schema:
       override val `type`: String = "array"
+
+    object Array:
+
+      def apply[I](name: String, itemsSchema: Schema { type objectType = I }): Array[I] =
+        Array[I](name, itemsSchema)
+
+      def forList[I](name: String, itemsSchema: Schema { type objectType = I }): List[I] =
+        List[I](name, itemsSchema)
+
+      final case class Array[I](name: String, itemsSchema: Schema { type objectType = I })
+          extends GenericArray[I](name, itemsSchema):
+        override type objectType = scala.Array[I]
+
+      final case class List[I](name: String, itemsSchema: Schema { type objectType = I })
+          extends GenericArray[I](name, itemsSchema):
+        override type objectType = scala.List[I]

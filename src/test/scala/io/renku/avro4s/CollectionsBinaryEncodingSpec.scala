@@ -39,3 +39,19 @@ class CollectionsBinaryEncodingSpec extends BinaryEncodingSpec:
     actual.toBin shouldBe expected
 
     AvroDecoder(schema).decode(actual).value shouldBe v
+
+  it should "serialize/deserialize a List" in:
+
+    val schema = Schema.Type.Array.forList(name = "field", Schema.Type.IntType.typeOnly)
+
+    forAll { (v: List[Int]) =>
+      val actual = AvroEncoder(schema).encode(v).value
+      val expected = expectedFrom(
+        v,
+        _.map(java.lang.Integer.valueOf).toList.asJava,
+        """{"type": "array", "items": "int"}"""
+      ).toBin
+      actual.toBin shouldBe expected
+
+      AvroDecoder(schema).decode(actual).value shouldBe v
+    }

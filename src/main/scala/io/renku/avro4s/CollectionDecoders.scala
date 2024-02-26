@@ -18,6 +18,13 @@ trait CollectionDecoders extends PrimitiveTypeDecoders:
       }
     }
 
+  given [I](using
+      ie: TypeDecoder[I],
+      ct: ClassTag[List[I]],
+      ict: ClassTag[I]
+  ): TypeDecoder[List[I]] =
+    TypeDecoder[Array[I]].map[List[I]](_.toList)
+
   @tailrec
   private def decodeItems[I](
       leftItems: Long,
