@@ -18,6 +18,9 @@ trait TypeDecoder[A]:
 object TypeDecoder:
 
   type TypeDecodingResult[A] = Either[AvroDecodingException, (A, ByteVector)]
+  object TypeDecodingResult:
+    def success[A](res: A, bv: ByteVector): TypeDecodingResult[A] =
+      (res -> bv).asRight
 
   def apply[A](using enc: TypeDecoder[A]): TypeDecoder[A] = enc
 

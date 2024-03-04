@@ -1,13 +1,13 @@
 package io.renku.avro4s
 
 import io.renku.avro4s.Schema.Type
-import io.renku.avro4s.all.given
+import org.apache.avro.generic.GenericData
 import org.scalacheck.Arbitrary
 import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.jdk.CollectionConverters.*
 
-class CollectionsBinaryEncodingSpec extends BinaryEncodingSpec:
+class CollectionsBinaryEncodingSpec extends BinaryEncodingSpec with Generators:
 
   it should "serialize/deserialize an Array - case with a positive count" in:
 
@@ -20,11 +20,27 @@ class CollectionsBinaryEncodingSpec extends BinaryEncodingSpec:
         v,
         _.map(java.lang.Integer.valueOf).toList.asJava,
         """{"type": "array", "items": "int"}"""
-      ).toBin
-      actual.toBin shouldBe expected
+      )
+      actual shouldBe expected
 
       AvroDecoder(schema).decode(actual).value shouldBe v
     }
+
+  it should "serialize/deserialize an Array - case with a negative count" in:
+
+    val blockSize = minBinaryBlockSize + 1
+    val v = Arbitrary.arbBool.generateList(blockSize + 2).toArray
+
+    given TypeEncoder[Array[Boolean]] = blockingArrayEncoder(blockSize)
+    val schema = Schema.Type.Array(name = "field", Schema.Type.BooleanType.typeOnly)
+    val encoded = AvroEncoder(schema).encode(v).value
+    val decodedOfficial = readWithOfficialLib[GenericData.Array[Boolean]](
+      encoded,
+      """{"type": "array", "items": "boolean"}"""
+    )
+    decodedOfficial.headOption.value.asScala.toArray[Boolean] shouldBe v
+
+    AvroDecoder(schema).decode(encoded).value shouldBe v
 
   it should "serialize/deserialize an Array of non-primitive types" in:
 

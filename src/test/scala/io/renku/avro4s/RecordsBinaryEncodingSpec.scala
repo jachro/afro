@@ -10,8 +10,8 @@ class RecordsBinaryEncodingSpec extends BinaryEncodingSpec:
     val v = TestType("sv", 1)
 
     val actual = AvroEncoder(TestType.schema).encode(v).value
-    val expected = expectedFrom(v, TestType.avroLibEncoder, TestType.avroSchema).toBin
-    actual.toBin shouldBe expected
+    val expected = expectedFrom(v, TestType.avroLibEncoder, TestType.avroSchema)
+    actual shouldBe expected
 
     AvroDecoder(TestType.schema).decode(actual).value shouldBe v
 
@@ -39,7 +39,7 @@ class RecordsBinaryEncodingSpec extends BinaryEncodingSpec:
           )
         )
       )
-    val expected = expectedFrom(v, record, avroSchema).toBin
-    actual.toBin shouldBe expected
+    val expected = expectedFrom(v, record, avroSchema)
+    actual shouldBe expected
 
     AvroDecoder(NestedTestType.schema).decode(actual).value shouldBe v

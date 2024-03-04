@@ -22,9 +22,8 @@ class PrimitivesBinaryEncodingSpec extends BinaryEncodingSpec:
       val schema = Schema.Type.BooleanType(name = "field")
 
       val actual = AvroEncoder(schema).encode(v).value
-      val expected =
-        expectedFrom(v, java.lang.Boolean.valueOf, """{"type": "boolean"}""").toBin
-      actual.toBin shouldBe expected
+      val expected = expectedFrom(v, java.lang.Boolean.valueOf, """{"type": "boolean"}""")
+      actual shouldBe expected
 
       AvroDecoder(schema).decode(actual).value shouldBe v
     }
@@ -36,9 +35,8 @@ class PrimitivesBinaryEncodingSpec extends BinaryEncodingSpec:
       .flatMap(v => List(-v, v))
       .foreach { v =>
         val actual = AvroEncoder(schema).encode(v).value
-        val expected =
-          expectedFrom(v, Integer.valueOf, """{"type": "int"}""").toBin
-        actual.toBin shouldBe expected
+        val expected = expectedFrom(v, Integer.valueOf, """{"type": "int"}""")
+        actual shouldBe expected
 
         AvroDecoder(schema).decode(actual).value shouldBe v
       }
@@ -50,9 +48,8 @@ class PrimitivesBinaryEncodingSpec extends BinaryEncodingSpec:
       .flatMap(v => List(-v.toLong, v.toLong))
       .foreach { v =>
         val actual = AvroEncoder(schema).encode(v).value
-        val expected =
-          expectedFrom(v, java.lang.Long.valueOf, """{"type": "long"}""").toBin
-        actual.toBin shouldBe expected
+        val expected = expectedFrom(v, java.lang.Long.valueOf, """{"type": "long"}""")
+        actual shouldBe expected
 
         AvroDecoder(schema).decode(actual).value shouldBe v
       }
@@ -63,9 +60,8 @@ class PrimitivesBinaryEncodingSpec extends BinaryEncodingSpec:
     forAll { (v: Float) =>
 
       val actual = AvroEncoder(schema).encode(v).value
-      val expected =
-        expectedFrom(v, java.lang.Float.valueOf, """{"type": "float"}""").toBin
-      actual.toBin shouldBe expected
+      val expected = expectedFrom(v, java.lang.Float.valueOf, """{"type": "float"}""")
+      actual shouldBe expected
 
       AvroDecoder(schema).decode(actual).value shouldBe v
     }
@@ -76,9 +72,8 @@ class PrimitivesBinaryEncodingSpec extends BinaryEncodingSpec:
     forAll { (v: Double) =>
 
       val actual = AvroEncoder(schema).encode(v).value
-      val expected =
-        expectedFrom(v, java.lang.Double.valueOf, """{"type": "double"}""").toBin
-      actual.toBin shouldBe expected
+      val expected = expectedFrom(v, java.lang.Double.valueOf, """{"type": "double"}""")
+      actual shouldBe expected
 
       AvroDecoder(schema).decode(actual).value shouldBe v
     }
@@ -90,8 +85,8 @@ class PrimitivesBinaryEncodingSpec extends BinaryEncodingSpec:
       val bvv = ByteVector(v)
 
       val actual = AvroEncoder(schema).encode(bvv).value
-      val expected = expectedFrom(bvv, _.toByteBuffer, """{"type": "bytes"}""").toBin
-      actual.toBin shouldBe expected
+      val expected = expectedFrom(bvv, _.toByteBuffer, """{"type": "bytes"}""")
+      actual shouldBe expected
 
       AvroDecoder(schema).decode(actual).value shouldBe bvv
     }
@@ -101,8 +96,8 @@ class PrimitivesBinaryEncodingSpec extends BinaryEncodingSpec:
 
     forAll { (v: String) =>
       val actual = AvroEncoder(schema).encode(v).value
-      val expected = expectedFrom(v, new Utf8(_), """{"type": "string"}""").toBin
-      actual.toBin shouldBe expected
+      val expected = expectedFrom(v, new Utf8(_), """{"type": "string"}""")
+      actual shouldBe expected
 
       AvroDecoder(schema).decode(actual).value shouldBe v
     }

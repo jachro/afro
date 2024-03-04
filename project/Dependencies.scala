@@ -6,7 +6,6 @@ object Dependencies {
   object V {
     val avro = "1.11.3"
     val catsCore = "2.10.0"
-    val fs2 = "3.9.4"
     val scalacheck = "1.17.0"
     val scalatest = "3.2.17"
     val scalatestScalacheck = "3.2.14.0"
@@ -27,10 +26,6 @@ object Dependencies {
 
   val catsFree = Seq(
     "org.typelevel" %% "cats-free" % V.catsCore
-  )
-
-  val fs2Core = Seq(
-    "co.fs2" %% "fs2-core" % V.fs2
   )
 
   val scalacheck = Seq(

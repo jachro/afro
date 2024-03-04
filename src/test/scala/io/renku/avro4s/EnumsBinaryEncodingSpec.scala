@@ -25,8 +25,8 @@ class EnumsBinaryEncodingSpec extends BinaryEncodingSpec:
         v,
         v => GenericData.get().createEnum(v.productPrefix, parse(avroSchema)),
         avroSchema
-      ).toBin
-      actual.toBin shouldBe expected
+      )
+      actual shouldBe expected
 
       AvroDecoder(schema).decode(actual).value shouldBe v
     }
