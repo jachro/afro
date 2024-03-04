@@ -1,6 +1,7 @@
 package io.renku.avro4s
 
 import cats.syntax.all.*
+import io.renku.avro4s.TypeDecoder.{Outcome, Result}
 import scodec.bits.ByteOrdering.LittleEndian
 import scodec.bits.{BitVector, ByteVector}
 
@@ -9,14 +10,15 @@ import scala.annotation.tailrec
 trait PrimitiveTypeDecoders:
 
   val nullTypeDecoder: TypeDecoder[Null] = (bytes: ByteVector) =>
-    (null, bytes).asRight[AvroDecodingException]
+    TypeDecoder.Result.success(null, bytes)
 
   given TypeDecoder[Boolean] = (bytes: ByteVector) =>
     bytes.splitAt(1) match
       case (ByteVector.empty, _) =>
-        AvroDecodingException("Cannot decode boolean value from empty bytes").asLeft
-      case (l, r) =>
-        (if l.head == 1 then true else false, r).asRight[AvroDecodingException]
+        TypeDecoder.Result.failure("Cannot decode boolean value from empty bytes")
+      case (l, leftBytes) =>
+        val res = if l.head == 1 then true else false
+        TypeDecoder.Result.success(res, leftBytes)
 
   given TypeDecoder[Int] = TypeDecoder[Long].map(_.toInt)
 
@@ -37,39 +39,40 @@ trait PrimitiveTypeDecoders:
       if (zigZag % 2 == 0) zigZag / 2
       else (zigZag + 1) / 2 * -1
 
-    (res -> rest).asRight
+    TypeDecoder.Result.success(res, rest)
 
   given TypeDecoder[Float] = (bytes: ByteVector) =>
     bytes.splitAt(4) match
       case (ByteVector.empty, _) =>
-        AvroDecodingException("Cannot decode float value from empty bytes").asLeft
+        TypeDecoder.Result.failure("Cannot decode float value from empty bytes")
       case (l, r) =>
         val d = java.lang.Float
           .intBitsToFloat(l.toInt(ordering = LittleEndian))
           .floatValue
-        (d, r).asRight[AvroDecodingException]
+        TypeDecoder.Result.success(d, r)
 
   given TypeDecoder[Double] = (bytes: ByteVector) =>
     bytes.splitAt(8) match
       case (ByteVector.empty, _) =>
-        AvroDecodingException("Cannot decode double value from empty bytes").asLeft
+        TypeDecoder.Result.failure("Cannot decode double value from empty bytes")
       case (l, r) =>
         val d = java.lang.Double
           .longBitsToDouble(l.toLong(ordering = LittleEndian))
           .doubleValue
-        (d, r).asRight[AvroDecodingException]
+        TypeDecoder.Result.success(d, r)
 
   given TypeDecoder[ByteVector] = {
     case ByteVector.empty =>
-      AvroDecodingException("Cannot decode bytes value from empty bytes").asLeft
+      TypeDecoder.Result.failure("Cannot decode bytes value from empty bytes")
     case bytes =>
       TypeDecoder[Long].decode(bytes) >>= {
-        case (size, r) if r.size < size =>
-          AvroDecodingException(
-            s"Cannot decode bytes value as there's only ${r.size} while expected $size"
-          ).asLeft
-        case (size, r) =>
-          (r.take(size) -> r.drop(size)).asRight
+        case out if out.leftBytes.size < out.value =>
+          TypeDecoder.Result.failure(
+            s"Cannot decode bytes value as there's only ${out.leftBytes.size} while expected ${out.value}"
+          )
+        case Outcome(size, leftBytes) =>
+          TypeDecoder.Result
+            .success(leftBytes.take(size), leftBytes.drop(size))
       }
   }
 
@@ -78,16 +81,17 @@ trait PrimitiveTypeDecoders:
       AvroDecodingException("Cannot decode string value from empty bytes").asLeft
     case bytes =>
       TypeDecoder[Long].decode(bytes) >>= {
-        case (size, r) if r.size < size =>
-          AvroDecodingException(
-            s"Cannot decode string value as there's only ${r.size} while expected $size"
-          ).asLeft
-        case (size, r) =>
-          r.take(size)
+        case Outcome(size, leftBytes) if leftBytes.size < size =>
+          TypeDecoder.Result.failure(
+            s"Cannot decode string value as there's only ${leftBytes.size} while expected $size"
+          )
+        case Outcome(size, leftBytes) =>
+          leftBytes
+            .take(size)
             .decodeUtf8
             .leftMap(
               AvroDecodingException(s"Cannot decode string value using UTF-8 charset", _)
             )
-            .tupleRight(r.drop(size))
+            .map(Outcome(_, leftBytes.drop(size)))
       }
   }

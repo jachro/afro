@@ -1,7 +1,7 @@
 package io.renku.avro4s
 
 import cats.syntax.all.*
-import io.renku.avro4s.TypeEncoder.TypeEncodingResult
+import io.renku.avro4s.TypeEncoder.Result
 import scodec.bits.ByteVector
 
 import scala.annotation.targetName
@@ -43,13 +43,13 @@ trait CollectionEncoders extends PrimitiveTypeEncoders:
   private def encodeArray[I](using
       ie: TypeEncoder[I],
       ct: ClassTag[Array[I]]
-  ): Array[I] => TypeEncodingResult = {
+  ): Array[I] => Result = {
     case arr if arr.isEmpty =>
       TypeEncoder[Long].encodeValue(0L)
     case arr =>
       for
         encLength <- TypeEncoder[Long].encodeValue(arr.length)
-        encItems <- arr.foldLeft(TypeEncodingResult.success(encLength)) {
+        encItems <- arr.foldLeft(TypeEncoder.Result.success(encLength)) {
           case (enc: Left[_, _], _) => enc
           case (Right(bv), i)       => ie.encodeValue(i).map(bv ++ _)
         }
@@ -75,7 +75,7 @@ trait CollectionEncoders extends PrimitiveTypeEncoders:
   private def encodeBlockingArray[I](blockSize: Int)(using
       ie: TypeEncoder[I],
       ct: ClassTag[Array[I]]
-  ): Array[I] => TypeEncodingResult = {
+  ): Array[I] => Result = {
     case arr if arr.isEmpty =>
       TypeEncoder[Long].encodeValue(0L)
     case arr =>

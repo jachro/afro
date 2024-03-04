@@ -2,6 +2,7 @@ package io.renku.avro4s
 
 import cats.syntax.all.*
 import io.renku.avro4s.Schema.Type
+import io.renku.avro4s.TypeDecoder.Outcome
 import io.renku.avro4s.all.given
 import org.apache.avro.util.Utf8
 
@@ -40,8 +41,8 @@ private object TestType:
   given TypeDecoder[TestType] = { bv =>
     TypeDecoder[String]
       .decode(bv)
-      .flatMap { case (sv, bv) =>
-        TypeDecoder[Int].decode(bv).map { case (iv, bv) => (sv, iv) -> bv }
+      .flatMap { case Outcome(sv, bv) =>
+        TypeDecoder[Int].decode(bv).map { case Outcome(iv, bv) => Outcome((sv, iv), bv) }
       }
-      .map { case (v, bv) => TestType.apply.tupled(v) -> bv }
+      .map { case Outcome(v, bv) => Outcome(TestType.apply.tupled(v), bv) }
   }
