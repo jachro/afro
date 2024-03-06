@@ -31,7 +31,7 @@ class CollectionsBinaryEncodingSpec extends BinaryEncodingSpec with Generators:
     val blockSize = minBinaryBlockSize + 1
     val v = Arbitrary.arbBool.generateList(blockSize + 2).toArray
 
-    given TypeEncoder[Array[Boolean]] = blockingArrayEncoder(blockSize)
+    given TypeEncoder[Array[Boolean]] = blockingListEncoder(blockSize)
     val schema = Schema.Type.Array(name = "field", Schema.Type.BooleanType.typeOnly)
     val encoded = AvroEncoder(schema).encode(v).value
     val decodedOfficial = readWithOfficialLib[GenericData.Array[Boolean]](

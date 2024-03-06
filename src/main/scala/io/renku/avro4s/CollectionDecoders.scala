@@ -1,6 +1,5 @@
 package io.renku.avro4s
 
-import cats.syntax.all.*
 import io.renku.avro4s.TypeDecoder.{Outcome, Result}
 import scodec.bits.ByteVector
 
@@ -11,37 +10,35 @@ trait CollectionDecoders extends PrimitiveTypeDecoders:
 
   given [C[X], I](using
       ie: TypeDecoder[I],
-      converter: Array[I] => C[I],
+      converter: List[I] => C[I],
       ict: ClassTag[I]
   ): TypeDecoder[C[I]] =
     TypeDecoder
-      .instance[Array[I]](decodeArray[I](Array.empty[I], _))
+      .instance[List[I]](decodeList[I](List.empty[I], _))
       .map[C[I]](converter)
 
-  given fromArray[I](using
+  given [I](using ct: ClassTag[Set[I]], ict: ClassTag[I]): Function1[List[I], Set[I]] =
+    _.toSet
+  given [I](using
       ct: ClassTag[Array[I]],
       ict: ClassTag[I]
-  ): Function1[Array[I], Array[I]] =
-    identity
-  given [I](using ct: ClassTag[Set[I]], ict: ClassTag[I]): Function1[Array[I], Set[I]] =
-    _.toSet
-  given [I](using ct: ClassTag[List[I]], ict: ClassTag[I]): Function1[Array[I], List[I]] =
-    _.toList
+  ): Function1[List[I], Array[I]] =
+    _.toArray
 
-  private def decodeArray[I](result: Array[I], bv: ByteVector)(using
+  private def decodeList[I](result: List[I], bv: ByteVector)(using
       ie: TypeDecoder[I],
       ct: ClassTag[I]
-  ): Result[Array[I]] =
+  ): Result[List[I]] =
     decodeCount(bv) >>= {
       case Outcome(0L, bv) =>
         TypeDecoder.Result.success(result, bv)
       case Outcome(count, bv) if count > 0 =>
         decodeBlockItems[I](count, bv).flatMap { case Outcome(curr, restBv) =>
-          decodeArray[I](result ++ curr, restBv)
+          decodeList[I](result ++ curr, restBv)
         }
       case Outcome(count, bv) =>
         decodeBlock[I](count, bv).flatMap { case Outcome(curr, restBv) =>
-          decodeArray[I](result ++ curr, restBv)
+          decodeList[I](result ++ curr, restBv)
         }
     }
 
@@ -51,14 +48,14 @@ trait CollectionDecoders extends PrimitiveTypeDecoders:
   private def decodeBlockItems[I](count: Long, bv: ByteVector)(using
       ie: TypeDecoder[I],
       ct: ClassTag[I]
-  ): Result[Array[I]] =
+  ): Result[List[I]] =
     decodeItems(count, Result.success(List.empty[I], bv))
-      .map { case Outcome(l, bv) => Outcome(l.reverse.toArray, bv) }
+      .map { case Outcome(l, bv) => Outcome(l.reverse, bv) }
 
   private def decodeBlock[I](count: Long, bv: ByteVector)(using
       ie: TypeDecoder[I],
       ct: ClassTag[I]
-  ): Result[Array[I]] =
+  ): Result[List[I]] =
     for
       bso <- decodeBlockSize(bv)
       res <- decodeBlockItems(count * -1, bso.leftBytes)
