@@ -15,7 +15,7 @@ class EnumsBinaryEncodingSpec extends BinaryEncodingSpec:
 
     val schema = Schema.Type.EnumType(name = "field", TestEnum.values)
 
-    given TypeDecoder[TestEnum] = enumTypeDecoder(using TestEnum)
+    given TypeDecoder[TestEnum] = enumTypeDecoder(TestEnum)
 
     val avroSchema = s"""{"type": "enum", "name": "TestEnum", "symbols": ["A", "B"]}"""
 
