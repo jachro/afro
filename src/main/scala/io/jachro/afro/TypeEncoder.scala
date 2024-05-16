@@ -1,6 +1,6 @@
-package io.renku.avro4s
+package io.jachro.afro
 
-import io.renku.avro4s.TypeEncoder.Result
+import io.jachro.afro.TypeEncoder.Result
 import scodec.bits.ByteVector
 
 trait TypeEncoder[A]:

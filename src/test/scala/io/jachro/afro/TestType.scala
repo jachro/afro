@@ -1,9 +1,9 @@
-package io.renku.avro4s
+package io.jachro.afro
 
 import cats.syntax.all.*
-import io.renku.avro4s.Schema.Type
-import io.renku.avro4s.TypeDecoder.Outcome
-import io.renku.avro4s.all.given
+import io.jachro.afro.Schema.Type
+import io.jachro.afro.TypeDecoder.Outcome
+import io.jachro.afro.all.given
 import org.apache.avro.util.Utf8
 
 final private case class TestType(stringValue: String, intValue: Int)

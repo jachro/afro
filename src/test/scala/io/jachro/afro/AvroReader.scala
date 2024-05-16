@@ -1,4 +1,4 @@
-package io.renku.avro4s
+package io.jachro.afro
 
 import org.apache.avro.Schema
 import org.apache.avro.file.SeekableInput
@@ -15,7 +15,7 @@ private object AvroReader:
   def apply(schema: Schema): AvroReader = new Impl(schema)
 
   private class Impl(schema: Schema) extends AvroReader:
-    private[this] val reader = new GenericDatumReader[Any](schema)
+    private val reader = new GenericDatumReader[Any](schema)
 
     extension (self: DatumReader[Any])
       def readOpt(decoder: Decoder): Option[Any] =
@@ -51,7 +51,7 @@ final private class ByteVectorInput(val bytes: ByteVector)
     extends InputStream
     with SeekableInput {
 
-  private[this] var position: Long = 0
+  private var position: Long = 0
 
   override def seek(p: Long): Unit =
     position = p

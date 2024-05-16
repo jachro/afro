@@ -1,4 +1,4 @@
-package io.renku.avro4s
+package io.jachro.afro
 
 trait EnumTypeEncoder extends PrimitiveTypeEncoders:
 

@@ -1,7 +1,7 @@
-package io.renku.avro4s
+package io.jachro.afro
 
-import io.renku.avro4s.Schema.Type
-import io.renku.avro4s.all.{*, given}
+import io.jachro.afro.Schema.Type
+import io.jachro.afro.all.{*, given}
 import org.apache.avro.generic.GenericData
 import org.scalacheck.Gen
 import org.scalatest.flatspec.AnyFlatSpec

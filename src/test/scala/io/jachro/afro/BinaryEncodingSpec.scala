@@ -1,6 +1,6 @@
-package io.renku.avro4s
+package io.jachro.afro
 
-import io.renku.avro4s.all
+import io.jachro.afro.all
 import org.apache.avro.Schema as AvroSchema
 import org.apache.avro.Schema.Parser as AvroParser
 import org.scalatest.flatspec.AnyFlatSpec

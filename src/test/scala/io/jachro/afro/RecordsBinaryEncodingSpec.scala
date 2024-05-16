@@ -1,4 +1,4 @@
-package io.renku.avro4s
+package io.jachro.afro
 
 import org.apache.avro.util.Utf8
 import org.scalatest.flatspec.AnyFlatSpec

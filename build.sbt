@@ -1,6 +1,6 @@
-organization := "io.renku"
-name := "avro4s"
-ThisBuild / scalaVersion := "3.3.1"
+organization := "io.jachro"
+name := "afro"
+ThisBuild / scalaVersion := "3.4.2"
 
 // This project contains nothing to package, like pure POM maven project
 packagedArtifacts := Map.empty
@@ -9,7 +9,6 @@ releaseVersionBump := sbtrelease.Version.Bump.Minor
 releaseIgnoreUntrackedFiles := true
 releaseTagName := (ThisBuild / version).value
 
-addCommandAlias("ci", "; lint; dbTests; publishLocal")
 addCommandAlias(
   "lint",
   "; scalafmtSbtCheck; scalafmtCheckAll;"
@@ -18,7 +17,7 @@ addCommandAlias("fix", "; scalafmtSbt; scalafmtAll")
 
 lazy val root = project
   .in(file("."))
-  .withId("avro4s")
+  .withId("afro")
   .settings(
     publish / skip := true,
     publishTo := Some(
@@ -37,7 +36,7 @@ lazy val root = project
   )
 
 lazy val commonSettings = Seq(
-  organization := "io.renku",
+  organization := "io.jachro",
   publish / skip := true,
   publishTo := Some(
     Resolver.file("Unused transient repository", file("target/unusedrepo"))
@@ -63,16 +62,14 @@ lazy val commonSettings = Seq(
   Compile / console / scalacOptions := (Compile / scalacOptions).value.filterNot(_ == "-Xfatal-warnings"),
   Test / console / scalacOptions := (Compile / console / scalacOptions).value,
   // Format: on
-  organizationName := "Swiss Data Science Center (SDSC)",
+  organizationName := "io.jachro",
   startYear := Some(java.time.LocalDate.now().getYear),
   licenses += ("Apache-2.0", new URI(
     "https://www.apache.org/licenses/LICENSE-2.0.txt"
   ).toURL),
   headerLicense := Some(
     HeaderLicense.Custom(
-      s"""|Copyright ${java.time.LocalDate.now().getYear} Swiss Data Science Center (SDSC)
-          |A partnership between École Polytechnique Fédérale de Lausanne (EPFL) and
-          |Eidgenössische Technische Hochschule Zürich (ETHZ).
+      s"""|Copyright ${java.time.LocalDate.now().getYear} jachro
           |
           |Licensed under the Apache License, Version 2.0 (the "License");
           |you may not use this file except in compliance with the License.

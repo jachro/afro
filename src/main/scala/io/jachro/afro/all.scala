@@ -1,4 +1,4 @@
-package io.renku.avro4s
+package io.jachro.afro
 
 object all extends all
 trait all

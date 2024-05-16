@@ -1,4 +1,4 @@
-package io.renku.avro4s
+package io.jachro.afro
 
 case class AvroDecodingException(message: String, cause: Throwable)
     extends RuntimeException(message, cause)

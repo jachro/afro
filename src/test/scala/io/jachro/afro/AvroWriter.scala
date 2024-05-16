@@ -1,4 +1,4 @@
-package io.renku.avro4s
+package io.jachro.afro
 
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericDatumWriter
@@ -13,7 +13,8 @@ private trait AvroWriter:
   def write[A](values: Seq[A], encoder: A => Any): ByteVector
 
 private object AvroWriter:
-  val blockSize: Int = 64 // in Bytes; this is the min block size as in org.apache.avro.io.EncoderFactory.MIN_BLOCK_BUFFER_SIZE
+  val blockSize: Int =
+    64 // in Bytes; this is the min block size as in org.apache.avro.io.EncoderFactory.MIN_BLOCK_BUFFER_SIZE
   private val nonBlockingEncoder: OutputStream => Encoder =
     EncoderFactory.get().binaryEncoder(_, null)
   private val blockingEncoder: OutputStream => Encoder =
@@ -29,7 +30,7 @@ private object AvroWriter:
       schema: Schema,
       encoderFactory: OutputStream => Encoder
   ) extends AvroWriter:
-    private[this] val writer = new GenericDatumWriter[Any](schema)
+    private val writer = new GenericDatumWriter[Any](schema)
 
     def write[A](values: Seq[A], encoder: A => Any): ByteVector =
       write0(values, encoder)

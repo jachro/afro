@@ -1,15 +1,16 @@
-package io.renku.avro4s
+package io.jachro.afro
 
 import cats.syntax.all.*
-import io.renku.avro4s.Schema.Type
-import io.renku.avro4s.TypeDecoder.Outcome
-import io.renku.avro4s.all.given
+import io.jachro.afro.Schema.Type.Record
+import io.jachro.afro.Schema.Type
+import io.jachro.afro.TypeDecoder.Outcome
+import io.jachro.afro.all.given
 
 final private case class NestedTestType(name: String, nested: TestType)
 
 private object NestedTestType:
 
-  val schema: Type.Record[NestedTestType] = Schema.Type
+  val schema: Record[NestedTestType] = Schema.Type
     .Record[NestedTestType](name = "NestedTestType")
     .addField("name", Schema.Type.StringType.typeOnly)
     .addField("nested", TestType.schema)

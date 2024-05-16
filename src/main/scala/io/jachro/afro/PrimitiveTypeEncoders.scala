@@ -1,4 +1,4 @@
-package io.renku.avro4s
+package io.jachro.afro
 
 import cats.syntax.all.*
 import scodec.bits.ByteOrdering.LittleEndian
@@ -15,8 +15,6 @@ trait PrimitiveTypeEncoders:
   given TypeEncoder[Boolean] = TypeEncoder.instance { v =>
     ByteVector.fromByte((if v then 1 else 0).toByte).asRight[AvroEncodingException]
   }
-
-  given TypeEncoder[Int] = TypeEncoder[Long].contramap(_.toLong)
 
   given TypeEncoder[Long] = TypeEncoder.instance[Long] { v =>
 
@@ -47,6 +45,8 @@ trait PrimitiveTypeEncoders:
         withMbs.reduce(_ ++ _).toByteVector
       }
   }
+
+  given TypeEncoder[Int] = TypeEncoder[Long].contramap(_.toLong)
 
   given TypeEncoder[Float] = TypeEncoder.instance { v =>
     ByteVector

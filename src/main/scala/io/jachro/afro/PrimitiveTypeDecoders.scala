@@ -1,7 +1,7 @@
-package io.renku.avro4s
+package io.jachro.afro
 
 import cats.syntax.all.*
-import io.renku.avro4s.TypeDecoder.{Outcome, Result}
+import io.jachro.afro.TypeDecoder.{Outcome, Result}
 import scodec.bits.ByteOrdering.LittleEndian
 import scodec.bits.{BitVector, ByteVector}
 
@@ -19,8 +19,6 @@ trait PrimitiveTypeDecoders:
       case (l, leftBytes) =>
         val res = if l.head == 1 then true else false
         TypeDecoder.Result.success(res, leftBytes)
-
-  given TypeDecoder[Int] = TypeDecoder[Long].map(_.toInt)
 
   given TypeDecoder[Long] = (bytes: ByteVector) =>
 
@@ -40,6 +38,8 @@ trait PrimitiveTypeDecoders:
       else (zigZag + 1) / 2 * -1
 
     TypeDecoder.Result.success(res, rest)
+
+  given TypeDecoder[Int] = TypeDecoder[Long].map(_.toInt)
 
   given TypeDecoder[Float] = (bytes: ByteVector) =>
     bytes.splitAt(4) match

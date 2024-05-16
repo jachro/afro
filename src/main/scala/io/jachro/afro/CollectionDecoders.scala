@@ -1,6 +1,6 @@
-package io.renku.avro4s
+package io.jachro.afro
 
-import io.renku.avro4s.TypeDecoder.{Outcome, Result}
+import io.jachro.afro.TypeDecoder.{Outcome, Result}
 import scodec.bits.ByteVector
 
 import scala.annotation.tailrec

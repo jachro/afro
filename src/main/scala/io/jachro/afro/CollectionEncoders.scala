@@ -1,7 +1,7 @@
-package io.renku.avro4s
+package io.jachro.afro
 
 import cats.syntax.all.*
-import io.renku.avro4s.TypeEncoder.Result
+import io.jachro.afro.TypeEncoder.Result
 import scodec.bits.ByteVector
 
 import scala.annotation.targetName
