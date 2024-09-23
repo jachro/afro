@@ -1,6 +1,6 @@
 organization := "io.jachro"
 name := "afro"
-ThisBuild / scalaVersion := "3.4.2"
+ThisBuild / scalaVersion := "3.5.1"
 
 // This project contains nothing to package, like pure POM maven project
 packagedArtifacts := Map.empty
