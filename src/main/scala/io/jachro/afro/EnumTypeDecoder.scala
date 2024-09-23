@@ -1,6 +1,6 @@
 package io.jachro.afro
 
-import scala.language.reflectiveCalls
+import scala.reflect.Selectable.reflectiveSelectable
 
 trait EnumTypeDecoder extends PrimitiveTypeDecoders:
 

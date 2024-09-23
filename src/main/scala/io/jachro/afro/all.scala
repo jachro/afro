@@ -8,3 +8,5 @@ trait all
     with EnumTypeDecoder
     with CollectionEncoders
     with CollectionDecoders
+    with MapEncoders
+    with MapDecoders

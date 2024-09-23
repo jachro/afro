@@ -126,3 +126,10 @@ object Schema:
           itemsSchema: Schema { type objectType = I }
       ) extends GenericArray[I](name, itemsSchema):
         override type objectType = C[I]
+
+    final case class MapType[I](
+        name: String,
+        valuesSchema: Schema { type objectType = I }
+    ) extends Schema:
+      override type objectType = scala.collection.Map[String, I]
+      override val `type`: String = "map"

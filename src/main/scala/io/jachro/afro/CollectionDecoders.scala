@@ -8,24 +8,36 @@ import scala.reflect.ClassTag
 
 trait CollectionDecoders extends PrimitiveTypeDecoders:
 
-  given [C[X], I](using
+  given arrayTypeDecoder[I](using
+      ie: TypeDecoder[I],
+      ict: ClassTag[I]
+  ): TypeDecoder[Array[I]] =
+    TypeDecoder
+      .instance[List[I]](decodeList[I](List.empty[I], _))
+      .map(_.toArray)
+
+  given seqTypeDecoder[C[X] <: collection.Seq[X], I](using
       ie: TypeDecoder[I],
       converter: List[I] => C[I],
       ict: ClassTag[I]
   ): TypeDecoder[C[I]] =
     TypeDecoder
       .instance[List[I]](decodeList[I](List.empty[I], _))
-      .map[C[I]](converter)
+      .map(converter)
+
+  given setTypeDecoder[C[X] <: collection.Set[X], I](using
+      ie: TypeDecoder[I],
+      converter: List[I] => C[I],
+      ict: ClassTag[I]
+  ): TypeDecoder[C[I]] =
+    TypeDecoder
+      .instance[List[I]](decodeList[I](List.empty[I], _))
+      .map(converter)
 
   given [I](using ct: ClassTag[Set[I]], ict: ClassTag[I]): Function1[List[I], Set[I]] =
     _.toSet
-  given [I](using
-      ct: ClassTag[Array[I]],
-      ict: ClassTag[I]
-  ): Function1[List[I], Array[I]] =
-    _.toArray
 
-  private def decodeList[I](result: List[I], bv: ByteVector)(using
+  protected def decodeList[I](result: List[I], bv: ByteVector)(using
       ie: TypeDecoder[I],
       ct: ClassTag[I]
   ): Result[List[I]] =

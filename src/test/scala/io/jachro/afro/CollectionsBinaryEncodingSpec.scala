@@ -26,12 +26,45 @@ class CollectionsBinaryEncodingSpec extends BinaryEncodingSpec with Generators:
       AvroDecoder(schema).decode(actual).value shouldBe v
     }
 
+  it should "serialize/deserialize a List" in:
+
+    val schema = Schema.Type.Array.forList(name = "field", Schema.Type.IntType.typeOnly)
+
+    forAll { (v: List[Int]) =>
+      val actual = AvroEncoder(schema).encode(v).value
+      val expected = expectedFrom(
+        v,
+        _.map(java.lang.Integer.valueOf).toList.asJava,
+        """{"type": "array", "items": "int"}"""
+      ).toBin
+      actual.toBin shouldBe expected
+
+      AvroDecoder(schema).decode(actual).value shouldBe v
+    }
+
+  it should "serialize/deserialize a Set" in:
+
+    val schema: Schema.Type.Array.Iterable[Int, Set] =
+      Schema.Type.Array.backedBy[Set, Int](name = "field", Schema.Type.IntType.typeOnly)
+
+    forAll { (v: Set[Int]) =>
+      val actual = AvroEncoder(schema).encode(v).value
+      val expected = expectedFrom(
+        v,
+        _.map(java.lang.Integer.valueOf).toList.asJava,
+        """{"type": "array", "items": "int"}"""
+      ).toBin
+      actual.toBin shouldBe expected
+
+      AvroDecoder(schema).decode(actual).value shouldBe v
+    }
+
   it should "serialize/deserialize an Array - case with a negative count" in:
 
     val blockSize = minBinaryBlockSize + 1
     val v = Arbitrary.arbBool.generateList(blockSize + 2).toArray
 
-    given TypeEncoder[Array[Boolean]] = blockingListEncoder(blockSize)
+    given TypeEncoder[Array[Boolean]] = blockingArrayEncoder(blockSize)
     val schema = Schema.Type.Array(name = "field", Schema.Type.BooleanType.typeOnly)
     val encoded = AvroEncoder(schema).encode(v).value
     val decodedOfficial = readWithOfficialLib[GenericData.Array[Boolean]](
@@ -56,36 +89,3 @@ class CollectionsBinaryEncodingSpec extends BinaryEncodingSpec with Generators:
     actual.toBin shouldBe expected
 
     AvroDecoder(schema).decode(actual).value shouldBe v
-
-  it should "serialize/deserialize a List" in:
-
-    val schema = Schema.Type.Array.forList(name = "field", Schema.Type.IntType.typeOnly)
-
-    forAll { (v: List[Int]) =>
-      val actual = AvroEncoder(schema).encode(v).value
-      val expected = expectedFrom(
-        v,
-        _.map(java.lang.Integer.valueOf).toList.asJava,
-        """{"type": "array", "items": "int"}"""
-      ).toBin
-      actual.toBin shouldBe expected
-
-      AvroDecoder(schema).decode(actual).value shouldBe v
-    }
-
-  it should "serialize/deserialize an Iterable" in:
-
-    val schema: Schema.Type.Array.Iterable[Int, Set] =
-      Schema.Type.Array.backedBy[Set, Int](name = "field", Schema.Type.IntType.typeOnly)
-
-    forAll { (v: Set[Int]) =>
-      val actual = AvroEncoder(schema).encode(v).value
-      val expected = expectedFrom(
-        v,
-        _.map(java.lang.Integer.valueOf).toList.asJava,
-        """{"type": "array", "items": "int"}"""
-      ).toBin
-      actual.toBin shouldBe expected
-
-      AvroDecoder(schema).decode(actual).value shouldBe v
-    }

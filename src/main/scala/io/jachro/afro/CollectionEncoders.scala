@@ -13,96 +13,62 @@ trait CollectionEncoders extends PrimitiveTypeEncoders:
   val minBinaryBlockSize: Int = 64
   val maxBinaryBlockSize: Int = 1024 * 1024 * 1024
 
-  given [C[X], I](using
-      ie: TypeEncoder[I],
-      converter: C[I] => List[I]
-  ): TypeEncoder[C[I]] =
-    nonBlockingListEncoder[C, I]
+  given arrayTypeEncoder[I](using ie: TypeEncoder[I]): TypeEncoder[Array[I]] =
+    nonBlockingArrayEncoder
 
-  def nonBlockingListEncoder[C[X], I](using
-      ie: TypeEncoder[I],
-      converter: C[I] => List[I]
+  given seqTypeEncoder[C[X] <: collection.Seq[X], I](using
+      ie: TypeEncoder[I]
   ): TypeEncoder[C[I]] =
-    TypeEncoder.instance[List[I]](encodeList[I]).contramap[C[I]](converter)
+    nonBlockingSeqEncoder
 
-  def blockingListEncoder[C[X], I](blockSize: Int)(using
-      ie: TypeEncoder[I],
-      converter: C[I] => List[I],
-      ict: ClassTag[I]
+  given setTypeEncoder[C[X] <: collection.Set[X], I](using
+      ie: TypeEncoder[I]
+  ): TypeEncoder[C[I]] =
+    nonBlockingSetEncoder
+
+  def nonBlockingArrayEncoder[I](using
+      ie: TypeEncoder[I]
+  ): TypeEncoder[Array[I]] =
+    TypeEncoder
+      .instance[List[I]](encodeList[I])
+      .contramap[Array[I]](Converters.arrayToList)
+
+  def nonBlockingSeqEncoder[C[X] <: collection.Seq[X], I](using
+      ie: TypeEncoder[I]
   ): TypeEncoder[C[I]] =
     TypeEncoder
-      .instance[List[I]](encodeBlockingList[I](blockSize))
-      .contramap(converter)
+      .instance[List[I]](encodeList[I])
+      .contramap[C[I]](Converters.seqToList)
 
-  def blockingListEncoder[C[X], I](using
-      ie: TypeEncoder[I],
-      converter: C[I] => List[I],
-      ict: ClassTag[I]
-  ): TypeEncoder[C[I]] = blockingListEncoder(defaultBinaryBlockSize)
-
-  /** This encoder tries to choose the best encoding strategy for the given collection of
-    * items. By checking the size of first item encoded to bytes multiplied by the number
-    * of items is:
-    *   - < than 75% of the `minBinaryBlockSize` the non-blocking encoder is used
-    *   - < than 75% of the `defaultBinaryBlockSize` and the item size is <
-    *     `minBinaryBlockSize` is the blocking encoder with `minBinaryBlockSize` is used
-    *   - < than 75% of the `maxBinaryBlockSize` and the item size is <
-    *     `defaultBinaryBlockSize` the blocking encoder with `defaultBinaryBlockSize` is
-    *     used
-    * In any other case, the blocking encoder with `maxBinaryBlockSize` is used.
-    *
-    * @param ie
-    *   TypeEncoder of the collection items
-    * @param converter
-    *   a function transforming the given collection to List
-    * @param ict
-    *   ClassTag of the collection item type
-    * @tparam C
-    *   type of the collection
-    * @tparam I
-    *   type of the item
-    * @return
-    *   TypeEncoder.Result
-    */
-  def autoListEncoder[C[X], I](using
-      ie: TypeEncoder[I],
-      converter: C[I] => List[I],
-      ict: ClassTag[I]
+  def nonBlockingSetEncoder[C[X] <: collection.Set[X], I](using
+      ie: TypeEncoder[I]
   ): TypeEncoder[C[I]] =
-    TypeEncoder.instance[List[I]] {
-      case l @ Nil =>
-        nonBlockingListEncoder[C, I].encodeValue(l.asInstanceOf[C[I]])
-      case l @ h :: tail =>
-        TypeEncoder[I].encodeValue(h).map(_.size) >>= { size =>
-          if size * l.length < .75 * minBinaryBlockSize then
-            nonBlockingListEncoder[C, I].encodeValue(l.asInstanceOf[C[I]])
-          else if size * l.length < .75 * defaultBinaryBlockSize && size < minBinaryBlockSize
-          then
-            blockingListEncoder[C, I](minBinaryBlockSize)
-              .encodeValue(l.asInstanceOf[C[I]])
-          else if size * l.length < .75 * maxBinaryBlockSize && size < defaultBinaryBlockSize
-          then
-            blockingListEncoder[C, I](defaultBinaryBlockSize)
-              .encodeValue(l.asInstanceOf[C[I]])
-          else
-            blockingListEncoder[C, I](maxBinaryBlockSize)
-              .encodeValue(l.asInstanceOf[C[I]])
-        }
-    }
-    TypeEncoder.instance[List[I]](encodeList[I]).contramap[C[I]](converter)
+    TypeEncoder
+      .instance[List[I]](encodeList[I])
+      .contramap[C[I]](Converters.setToList)
 
-  given [I](using
-      ct: ClassTag[Array[I]],
-      ict: ClassTag[I]
-  ): Function1[Array[I], List[I]] =
-    _.toList
-  given [C[X] <: IterableOnce[X], I](using
-      ct: ClassTag[C[I]],
-      ict: ClassTag[I]
-  ): Function1[C[I], List[I]] =
-    _.iterator.toList
+  def blockingArrayEncoder[I](blockSize: Int = defaultBinaryBlockSize)(using
+      ie: TypeEncoder[I]
+  ): TypeEncoder[Array[I]] =
+    TypeEncoder
+      .instance[List[I]](encodeBlockingList[I](blockSize))
+      .contramap(Converters.arrayToList)
 
-  private def encodeList[I](using ie: TypeEncoder[I]): List[I] => Result = {
+  def blockingSeqEncoder[C[X] <: collection.Seq[X], I](
+      blockSize: Int = defaultBinaryBlockSize
+  )(using ie: TypeEncoder[I]): TypeEncoder[C[I]] =
+    TypeEncoder
+      .instance[List[I]](encodeBlockingList[I](blockSize))
+      .contramap(Converters.seqToList)
+
+  def blockingSetEncoder[C[X] <: collection.Set[X], I](
+      blockSize: Int = defaultBinaryBlockSize
+  )(using ie: TypeEncoder[I]): TypeEncoder[C[I]] =
+    TypeEncoder
+      .instance[List[I]](encodeBlockingList[I](blockSize))
+      .contramap(Converters.setToList)
+
+  protected def encodeList[I](using ie: TypeEncoder[I]): List[I] => Result = {
     case Nil =>
       TypeEncoder[Long].encodeValue(0L)
     case list =>
@@ -114,6 +80,11 @@ trait CollectionEncoders extends PrimitiveTypeEncoders:
         }
       yield encItems :+ 0.toByte
   }
+
+  private object Converters:
+    def arrayToList[I]: Array[I] => List[I] = _.toList
+    def seqToList[I]: collection.Seq[I] => List[I] = _.toList
+    def setToList[I]: collection.Set[I] => List[I] = _.toList
 
   private case class EncodingBuffer(items: Int, encoded: ByteVector):
     lazy val size: Long = encoded.size
@@ -131,7 +102,7 @@ trait CollectionEncoders extends PrimitiveTypeEncoders:
         size <- TypeEncoder[Long].encodeValue(eb.size)
       yield items ++ size ++ eb.encoded
 
-  private def encodeBlockingList[I](blockSize: Int)(using
+  protected def encodeBlockingList[I](blockSize: Int)(using
       ie: TypeEncoder[I],
       ct: ClassTag[List[I]]
   ): List[I] => Result = {
