@@ -1,6 +1,6 @@
 package io.jachro.afro
 
-import io.jachro.afro.Schema.Type
+import io.jachro.afro.Schema
 import io.jachro.afro.all.{*, given}
 import org.apache.avro.util.Utf8
 import org.scalacheck.Arbitrary
@@ -10,7 +10,7 @@ import scodec.bits.ByteVector
 class PrimitivesBinaryEncodingSpec extends BinaryEncodingSpec:
 
   it should "serialize/deserialize Null value" in:
-    val schema = Schema.Type.NullType(name = "field")
+    val schema = Schema.NullType(name = "field")
     given TypeEncoder[Null] = nullTypeEncoder
     given TypeDecoder[Null] = nullTypeDecoder
 
@@ -19,7 +19,7 @@ class PrimitivesBinaryEncodingSpec extends BinaryEncodingSpec:
 
   it should "serialize/deserialize Boolean value" in:
     Set(true, false).foreach { v =>
-      val schema = Schema.Type.BooleanType(name = "field")
+      val schema = Schema.BooleanType(name = "field")
 
       val actual = AvroEncoder(schema).encode(v).value
       val expected = expectedFrom(v, java.lang.Boolean.valueOf, """{"type": "boolean"}""")
@@ -29,7 +29,7 @@ class PrimitivesBinaryEncodingSpec extends BinaryEncodingSpec:
     }
 
   it should "serialize/deserialize an Int value" in:
-    val schema = Schema.Type.IntType(name = "field")
+    val schema = Schema.IntType(name = "field")
 
     List(0, 1, Byte.MaxValue / 2 + 1, Short.MaxValue / 2 + 1, Int.MaxValue / 2 + 1)
       .flatMap(v => List(-v, v))
@@ -42,7 +42,7 @@ class PrimitivesBinaryEncodingSpec extends BinaryEncodingSpec:
       }
 
   it should "serialize/deserialize a Long value" in:
-    val schema = Schema.Type.LongType(name = "field")
+    val schema = Schema.LongType(name = "field")
 
     List(0, 1, Byte.MaxValue / 2 + 1, Short.MaxValue / 2 + 1, Int.MaxValue / 2 + 1)
       .flatMap(v => List(-v.toLong, v.toLong))
@@ -55,7 +55,7 @@ class PrimitivesBinaryEncodingSpec extends BinaryEncodingSpec:
       }
 
   it should "serialize/deserialize a Float value" in:
-    val schema = Schema.Type.FloatType(name = "field")
+    val schema = Schema.FloatType(name = "field")
 
     forAll { (v: Float) =>
 
@@ -67,7 +67,7 @@ class PrimitivesBinaryEncodingSpec extends BinaryEncodingSpec:
     }
 
   it should "serialize/deserialize a Double value" in:
-    val schema = Schema.Type.DoubleType(name = "field")
+    val schema = Schema.DoubleType(name = "field")
 
     forAll { (v: Double) =>
 
@@ -79,7 +79,7 @@ class PrimitivesBinaryEncodingSpec extends BinaryEncodingSpec:
     }
 
   it should "serialize/deserialize a sequence of Bytes" in:
-    val schema = Schema.Type.BytesType(name = "field")
+    val schema = Schema.BytesType(name = "field")
 
     forAll { (v: Seq[Byte]) =>
       val bvv = ByteVector(v)
@@ -92,7 +92,7 @@ class PrimitivesBinaryEncodingSpec extends BinaryEncodingSpec:
     }
 
   it should "serialize/deserialize a String value" in:
-    val schema = Schema.Type.StringType(name = "field")
+    val schema = Schema.StringType(name = "field")
 
     forAll { (v: String) =>
       val actual = AvroEncoder(schema).encode(v).value

@@ -1,6 +1,6 @@
 package io.jachro.afro
 
-import io.jachro.afro.Schema.Type
+import io.jachro.afro.Schema
 import org.apache.avro.generic.GenericData
 import org.scalacheck.Arbitrary
 import org.scalatest.flatspec.AnyFlatSpec
@@ -11,7 +11,7 @@ class CollectionsBinaryEncodingSpec extends BinaryEncodingSpec with Generators:
 
   it should "serialize/deserialize an Array - case with a positive count" in:
 
-    val schema = Schema.Type.Array(name = "field", Schema.Type.IntType.typeOnly)
+    val schema = Schema.Array(name = "field", Schema.IntType.typeOnly)
 
     forAll { (l: List[Int]) =>
       val v = l.toArray
@@ -28,7 +28,7 @@ class CollectionsBinaryEncodingSpec extends BinaryEncodingSpec with Generators:
 
   it should "serialize/deserialize a List" in:
 
-    val schema = Schema.Type.Array.forList(name = "field", Schema.Type.IntType.typeOnly)
+    val schema = Schema.Array.forList(name = "field", Schema.IntType.typeOnly)
 
     forAll { (v: List[Int]) =>
       val actual = AvroEncoder(schema).encode(v).value
@@ -44,8 +44,8 @@ class CollectionsBinaryEncodingSpec extends BinaryEncodingSpec with Generators:
 
   it should "serialize/deserialize a Set" in:
 
-    val schema: Schema.Type.Array.Iterable[Int, Set] =
-      Schema.Type.Array.backedBy[Set, Int](name = "field", Schema.Type.IntType.typeOnly)
+    val schema: Schema.Array.Iterable[Int, Set] =
+      Schema.Array.backedBy[Set, Int](name = "field", Schema.IntType.typeOnly)
 
     forAll { (v: Set[Int]) =>
       val actual = AvroEncoder(schema).encode(v).value
@@ -65,7 +65,7 @@ class CollectionsBinaryEncodingSpec extends BinaryEncodingSpec with Generators:
     val v = Arbitrary.arbBool.generateList(blockSize + 2).toArray
 
     given TypeEncoder[Array[Boolean]] = blockingArrayEncoder(blockSize)
-    val schema = Schema.Type.Array(name = "field", Schema.Type.BooleanType.typeOnly)
+    val schema = Schema.Array(name = "field", Schema.BooleanType.typeOnly)
     val encoded = AvroEncoder(schema).encode(v).value
     val decodedOfficial = readWithOfficialLib[GenericData.Array[Boolean]](
       encoded,
@@ -77,7 +77,7 @@ class CollectionsBinaryEncodingSpec extends BinaryEncodingSpec with Generators:
 
   it should "serialize/deserialize an Array of non-primitive types" in:
 
-    val schema = Schema.Type.Array(name = "field", TestType.schema)
+    val schema = Schema.Array(name = "field", TestType.schema)
 
     val v = scala.Array(TestType("tt1", 1), TestType("tt2", 2))
     val actual = AvroEncoder(schema).encode(v).value

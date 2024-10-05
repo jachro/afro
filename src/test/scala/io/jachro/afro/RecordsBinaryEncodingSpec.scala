@@ -1,7 +1,6 @@
 package io.jachro.afro
 
 import org.apache.avro.util.Utf8
-import org.scalatest.flatspec.AnyFlatSpec
 
 class RecordsBinaryEncodingSpec extends BinaryEncodingSpec:
 

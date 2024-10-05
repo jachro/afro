@@ -10,3 +10,5 @@ trait all
     with CollectionDecoders
     with MapEncoders
     with MapDecoders
+    with UnionTypeEncoders
+    with UnionTypeDecoders

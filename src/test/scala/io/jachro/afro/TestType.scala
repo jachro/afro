@@ -1,7 +1,7 @@
 package io.jachro.afro
 
 import cats.syntax.all.*
-import io.jachro.afro.Schema.Type
+import io.jachro.afro.Schema.*
 import io.jachro.afro.TypeDecoder.Outcome
 import io.jachro.afro.all.given
 import org.apache.avro.util.Utf8
@@ -10,10 +10,10 @@ final private case class TestType(stringValue: String, intValue: Int)
 
 private object TestType:
 
-  val schema: Type.Record[TestType] = Schema.Type
+  val schema: Record[TestType] = Schema
     .Record[TestType](name = "TestType")
-    .addField("stringValue", Schema.Type.StringType.typeOnly)
-    .addField("intValue", Schema.Type.IntType.typeOnly)
+    .addField("stringValue", Schema.StringType.typeOnly)
+    .addField("intValue", Schema.IntType.typeOnly)
 
   val avroSchema: String =
     """|{

@@ -1,6 +1,5 @@
 package io.jachro.afro
 
-import io.jachro.afro.Schema.Type
 import io.jachro.afro.all.{*, given}
 import org.apache.avro.generic.GenericData
 import org.scalacheck.Gen
@@ -13,7 +12,7 @@ class EnumsBinaryEncodingSpec extends BinaryEncodingSpec:
 
   it should "serialize/deserialize an Enum value" in:
 
-    val schema = Schema.Type.EnumType(name = "field", TestEnum.values)
+    val schema = Schema.EnumType(name = "field", TestEnum.values)
 
     given TypeDecoder[TestEnum] = enumTypeDecoder(TestEnum)
 

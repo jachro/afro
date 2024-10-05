@@ -1,8 +1,8 @@
 package io.jachro.afro
 
 import cats.syntax.all.*
-import io.jachro.afro.Schema.Type.Record
-import io.jachro.afro.Schema.Type
+import io.jachro.afro.Schema
+import io.jachro.afro.Schema.Record
 import io.jachro.afro.TypeDecoder.Outcome
 import io.jachro.afro.all.given
 
@@ -10,9 +10,9 @@ final private case class NestedTestType(name: String, nested: TestType)
 
 private object NestedTestType:
 
-  val schema: Record[NestedTestType] = Schema.Type
+  val schema: Record[NestedTestType] = Schema
     .Record[NestedTestType](name = "NestedTestType")
-    .addField("name", Schema.Type.StringType.typeOnly)
+    .addField("name", Schema.StringType.typeOnly)
     .addField("nested", TestType.schema)
 
   given TypeEncoder[NestedTestType] = TypeEncoder.instance[NestedTestType] { v =>

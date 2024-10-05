@@ -1,7 +1,7 @@
 package io.jachro.afro
 
 import cats.syntax.all.*
-import io.jachro.afro.TypeDecoder.{Outcome, Result}
+import io.jachro.afro.TypeDecoder.Outcome
 import scodec.bits.ByteOrdering.LittleEndian
 import scodec.bits.{BitVector, ByteVector}
 
