@@ -76,9 +76,9 @@ object Schema:
     def addField(field: Record.Field): Record[A] =
       copy(fields = (field +: fields).reverse)
     def addField(name: String, schema: Schema): Record[A] =
-      addField(Record.Field.Simple(name, schema, default = Option.empty))
-    def addOptionalField(name: String, schema: Schema): Record[A] =
-      addField(Record.Field(name, schema, None))
+      addField(Record.Field(name, schema, default = Option.empty))
+    def addOptionalField(name: String, valueSchema: Schema): Record[A] =
+      addField(Record.Field.optional[String](name, valueSchema))
   object Record:
     def apply[A](name: String): Record[A] = Record(name, Seq.empty)
 
@@ -92,19 +92,28 @@ object Schema:
           schema: Schema,
           default: Option[schema.objectType]
       ): Field = Simple(name, schema, default)
+      def optional[V](
+          name: String,
+          valueSchema: Schema
+      ): Field = Union.Optional[V](name, valueSchema)
 
       final class Simple(
           override val name: String,
           override val schema: Schema,
           override val default: Option[schema.objectType]
       ) extends Field
-      sealed abstract class UnionType[A](defaultValue: A) extends Schema:
-        override type objectType = A
-      object UnionType:
-        final case class Optional[V](valueSchema: Schema)
-            extends UnionType[Option[V]](defaultValue = Option.empty[V]):
-          override type objectType = Option[V]
-          override val `type`: String = s"""[ "null", "${valueSchema.`type`}" ]"""
+
+      sealed abstract class Union[V](name: String) extends Field
+      object Union:
+        final case class Optional[V](name: String, valueSchema: Schema)
+            extends Union[Option[V]](name):
+
+          override val schema: Schema = new Schema:
+            override type objectType = Option[V]
+            override val `type`: String = s"""[ "null", "${valueSchema.`type`}" ]"""
+
+          override val default: Option[schema.objectType] =
+            Option.empty[schema.objectType]
 
   final case class EnumType[A <: scala.reflect.Enum](
       maybeName: Option[String],
