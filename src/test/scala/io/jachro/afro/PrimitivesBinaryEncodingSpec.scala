@@ -41,6 +41,13 @@ class PrimitivesBinaryEncodingSpec extends BinaryEncodingSpec:
         AvroDecoder(schema).decode(actual).value shouldBe v
       }
 
+  it should "fail when deserialize empty ByteVector to an Int value" in:
+    val schema = Schema.IntType(name = "field")
+
+    val ex = AvroDecoder(schema).decode(ByteVector.empty).left.value
+
+    ex shouldBe AvroDecodingException("Empty Bytes cannot be decoded to a Number")
+
   it should "serialize/deserialize a Long value" in:
     val schema = Schema.LongType(name = "field")
 

@@ -73,19 +73,28 @@ object Schema:
   final case class Record[A](name: String, fields: Seq[Record.Field]) extends Schema:
     override type objectType = A
     override val `type`: String = "record"
+
     def addField(field: Record.Field): Record[A] =
       copy(fields = (field +: fields).reverse)
     def addField(name: String, schema: Schema): Record[A] =
       addField(Record.Field(name, schema, default = Option.empty))
-    def addOptionalField(name: String, valueSchema: Schema): Record[A] =
-      addField(Record.Field.optional[String](name, valueSchema))
+    def addOptionalField[V](name: String, valueSchema: Schema): Record[A] =
+      addField(Record.Field.optional[V](name, valueSchema))
+    def addEitherField[L, R](
+        name: String,
+        lSchema: Schema,
+        rSchema: Schema,
+        leftDefault: L
+    ): Record[A] =
+      addField(Record.Field.either[L, R](name, lSchema, rSchema, leftDefault))
+
   object Record:
     def apply[A](name: String): Record[A] = Record(name, Seq.empty)
 
     sealed trait Field:
       val name: String
       val schema: Schema
-      val default: Option[schema.objectType]
+      val default: Option[?]
     object Field:
       def apply(
           name: String,
@@ -96,6 +105,12 @@ object Schema:
           name: String,
           valueSchema: Schema
       ): Field = Union.Optional[V](name, valueSchema)
+      def either[L, R](
+          name: String,
+          lSchema: Schema,
+          rSchema: Schema,
+          leftDefault: L
+      ): Field = Union.Either[L, R](name, lSchema, rSchema, leftDefault)
 
       final class Simple(
           override val name: String,
@@ -112,8 +127,23 @@ object Schema:
             override type objectType = Option[V]
             override val `type`: String = s"""[ "null", "${valueSchema.`type`}" ]"""
 
-          override val default: Option[schema.objectType] =
-            Option.empty[schema.objectType]
+          override val default: Option[valueSchema.objectType] =
+            Option.empty[valueSchema.objectType]
+
+        final case class Either[L, R](
+            name: String,
+            lSchema: Schema,
+            rSchema: Schema,
+            leftDefault: L
+        ) extends Union[scala.util.Either[L, R]](name):
+
+          override val schema: Schema = new Schema:
+            override type objectType = scala.util.Either[L, R]
+            override val `type`: String =
+              s"""[ "${lSchema.`type`}", "${rSchema.`type`}" ]"""
+
+          override val default: Option[scala.util.Left[L, R]] =
+            Option(scala.util.Left(leftDefault))
 
   final case class EnumType[A <: scala.reflect.Enum](
       maybeName: Option[String],

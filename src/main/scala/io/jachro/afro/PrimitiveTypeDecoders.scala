@@ -20,24 +20,27 @@ trait PrimitiveTypeDecoders:
         val res = if l.head == 1 then true else false
         TypeDecoder.Result.success(res, leftBytes)
 
-  given TypeDecoder[Long] = (bytes: ByteVector) =>
+  given TypeDecoder[Long] = {
+    case bv if bv.isEmpty =>
+      TypeDecoder.Result.failure("Empty Bytes cannot be decoded to a Number")
+    case bytes =>
+      @tailrec
+      def takeNumberBits(bytes: ByteVector, acc: BitVector): (BitVector, ByteVector) =
+        val (head, tail) = bytes.splitAt(1)
+        val bits = head.toBitVector
+        if bits.headOption.contains(false) then bits.drop(1) ++ acc -> tail
+        else takeNumberBits(tail, bits.drop(1) ++ acc)
 
-    @tailrec
-    def takeNumberBits(bytes: ByteVector, acc: BitVector): (BitVector, ByteVector) =
-      val (head, tail) = bytes.splitAt(1)
-      val bits = head.toBitVector
-      if bits.headOption.contains(false) then bits.drop(1) ++ acc -> tail
-      else takeNumberBits(tail, bits.drop(1) ++ acc)
+      val (number, rest) = takeNumberBits(bytes, BitVector.empty)
 
-    val (number, rest) = takeNumberBits(bytes, BitVector.empty)
+      val zigZag = number.toLong(signed = false)
 
-    val zigZag = number.toLong(signed = false)
+      val res =
+        if (zigZag % 2 == 0) zigZag / 2
+        else (zigZag + 1) / 2 * -1
 
-    val res =
-      if (zigZag % 2 == 0) zigZag / 2
-      else (zigZag + 1) / 2 * -1
-
-    TypeDecoder.Result.success(res, rest)
+      TypeDecoder.Result.success(res, rest)
+  }
 
   given TypeDecoder[Int] = TypeDecoder[Long].map(_.toInt)
 
