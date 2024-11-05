@@ -44,18 +44,18 @@ class MapsBinaryEncodingSpec extends BinaryEncodingSpec with Generators:
 
   it should "serialize/deserialize a Map of non-primitive types" in:
 
-    val schema = Schema.MapType(name = "field", TestType.schema)
+    val schema = Schema.MapType(name = "field", RecordTestType.schema)
 
-    val map = Map("field1" -> TestType("tt1", 1), "field2" -> TestType("tt2", 2))
+    val map = Map("field1" -> RecordTestType("tt1", 1), "field2" -> RecordTestType("tt2", 2))
 
     val encoded = AvroEncoder(schema).encode(map).value
 
     AvroDecoder(schema).decode(encoded).value shouldBe map
 
-    val encodedWithOfficialLib = expectedFrom[Map[String, TestType]](
+    val encodedWithOfficialLib = expectedFrom[Map[String, RecordTestType]](
       map,
-      _.view.mapValues(TestType.avroLibEncoder).toMap.asJava,
-      s"""{"type": "map", "values": ${TestType.avroSchema}}"""
+      _.view.mapValues(RecordTestType.avroLibEncoder).toMap.asJava,
+      s"""{"type": "map", "values": ${RecordTestType.avroSchema}}"""
     )
     encoded shouldBe encodedWithOfficialLib
 

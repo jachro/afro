@@ -6,17 +6,17 @@ class RecordsBinaryEncodingSpec extends BinaryEncodingSpec:
 
   it should "serialize/deserialize a Record value" in:
 
-    val v = TestType("sv", 1)
+    val v = RecordTestType("sv", 1)
 
-    val actual = AvroEncoder(TestType.schema).encode(v).value
-    val expected = expectedFrom(v, TestType.avroLibEncoder, TestType.avroSchema)
+    val actual = AvroEncoder(RecordTestType.schema).encode(v).value
+    val expected = expectedFrom(v, RecordTestType.avroLibEncoder, RecordTestType.avroSchema)
     actual shouldBe expected
 
-    AvroDecoder(TestType.schema).decode(actual).value shouldBe v
+    AvroDecoder(RecordTestType.schema).decode(actual).value shouldBe v
 
   it should "serialize/deserialize a nested Record value" in:
 
-    val v = NestedTestType("name", TestType("sv", 1))
+    val v = NestedTestType("name", RecordTestType("sv", 1))
 
     val actual = AvroEncoder(NestedTestType.schema).encode(v).value
     val avroSchema = s"""|{
@@ -24,7 +24,7 @@ class RecordsBinaryEncodingSpec extends BinaryEncodingSpec:
                          |  "name": "NestedTestType",
                          |  "fields": [
                          |    {"name": "name", "type": "string"},
-                         |    {"name": "nested", "type": ${TestType.avroSchema}}
+                         |    {"name": "nested", "type": ${RecordTestType.avroSchema}}
                          |  ]
                          |}""".stripMargin
     def record(tt: NestedTestType) =
@@ -33,7 +33,7 @@ class RecordsBinaryEncodingSpec extends BinaryEncodingSpec:
         Seq(
           new Utf8(tt.name),
           OfficialAvroLibRecord(
-            TestType.avroSchema,
+            RecordTestType.avroSchema,
             Seq(new Utf8(tt.nested.stringValue), Integer.valueOf(tt.nested.intValue))
           )
         )

@@ -6,19 +6,19 @@ import io.jachro.afro.Schema.Record
 import io.jachro.afro.TypeDecoder.Outcome
 import io.jachro.afro.all.given
 
-final private case class NestedTestType(name: String, nested: TestType)
+final private case class NestedTestType(name: String, nested: RecordTestType)
 
 private object NestedTestType:
 
   val schema: Record[NestedTestType] = Schema
     .Record[NestedTestType](name = "NestedTestType")
     .addField("name", Schema.StringType.typeOnly)
-    .addField("nested", TestType.schema)
+    .addField("nested", RecordTestType.schema)
 
   given TypeEncoder[NestedTestType] = TypeEncoder.instance[NestedTestType] { v =>
     List(
       TypeEncoder[String].encodeValue(v.name),
-      TypeEncoder[TestType].encodeValue(v.nested)
+      TypeEncoder[RecordTestType].encodeValue(v.nested)
     ).sequence.map(_.reduce(_ ++ _))
   }
 
@@ -26,7 +26,7 @@ private object NestedTestType:
     TypeDecoder[String]
       .decode(bv)
       .flatMap { case Outcome(sv, bv) =>
-        TypeDecoder[TestType].decode(bv).map { case Outcome(iv, bv) =>
+        TypeDecoder[RecordTestType].decode(bv).map { case Outcome(iv, bv) =>
           Outcome((sv, iv), bv)
         }
       }

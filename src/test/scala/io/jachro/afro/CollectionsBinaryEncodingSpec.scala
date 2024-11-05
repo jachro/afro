@@ -77,14 +77,14 @@ class CollectionsBinaryEncodingSpec extends BinaryEncodingSpec with Generators:
 
   it should "serialize/deserialize an Array of non-primitive types" in:
 
-    val schema = Schema.Array(name = "field", TestType.schema)
+    val schema = Schema.Array(name = "field", RecordTestType.schema)
 
-    val v = scala.Array(TestType("tt1", 1), TestType("tt2", 2))
+    val v = scala.Array(RecordTestType("tt1", 1), RecordTestType("tt2", 2))
     val actual = AvroEncoder(schema).encode(v).value
     val expected = expectedFrom(
       v,
-      _.map(TestType.avroLibEncoder).toList.asJava,
-      s"""{"type": "array", "items": ${TestType.avroSchema}}"""
+      _.map(RecordTestType.avroLibEncoder).toList.asJava,
+      s"""{"type": "array", "items": ${RecordTestType.avroSchema}}"""
     ).toBin
     actual.toBin shouldBe expected
 
