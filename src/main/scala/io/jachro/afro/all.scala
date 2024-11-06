@@ -12,3 +12,5 @@ trait all
     with MapDecoders
     with UnionTypeEncoders
     with UnionTypeDecoders
+    with FixedTypeEncoder
+    with FixedTypeDecoder

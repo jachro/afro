@@ -196,3 +196,7 @@ object Schema:
   ) extends Schema:
     override type objectType = scala.collection.Map[String, I]
     override val `type`: String = "map"
+
+  final case class FixedType[A](name: String, size: Int) extends Schema:
+    override type objectType = A
+    override val `type`: String = "fixed"
